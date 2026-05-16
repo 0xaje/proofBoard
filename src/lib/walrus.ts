@@ -1,27 +1,16 @@
 import { useState } from 'react';
-import axios from 'axios';
 
-const FALLBACK_PUBLISHERS = [
+const PUBLISHERS = [
   'https://publisher.walrus-testnet.walrus.space',
   'https://testnet.walrus-publisher.sm.xyz',
   'https://publisher.walrus.network'
 ];
 
-const FALLBACK_AGGREGATORS = [
+const AGGREGATORS = [
   'https://aggregator.walrus-testnet.walrus.space',
   'https://testnet.walrus-aggregator.sm.xyz',
   'https://aggregator.walrus.network'
 ];
-
-const getEndpoints = () => {
-  const env = process.env.NEXT_PUBLIC_WALRUS_ENDPOINT || process.env.WALRUS_ENDPOINT;
-  return env ? [env, ...FALLBACK_PUBLISHERS] : FALLBACK_PUBLISHERS;
-};
-
-const getAggregators = () => {
-  const env = process.env.NEXT_PUBLIC_WALRUS_AGGREGATOR || process.env.WALRUS_AGGREGATOR;
-  return env ? [env, ...FALLBACK_AGGREGATORS] : FALLBACK_AGGREGATORS;
-};
 
 export type WalrusUploadResult = {
   blobId: string;
@@ -29,52 +18,14 @@ export type WalrusUploadResult = {
   alreadyCertified?: boolean;
 };
 
-export type ProtocolExecutionTrace = {
-  operation: "walrus_write" | "walrus_read";
-  endpoint: string;
-  method: string;
-  requestPayload?: any;
-  response: any;
-  timestamp: string;
-  latency?: number;
-  executionProof: boolean;
-  timeline: string[];
-};
-
-let executionTraces: ProtocolExecutionTrace[] = [];
-const getJitter = (min = 100, max = 800) => Math.floor(Math.random() * (max - min + 1) + min);
-
-export const getExecutionTraces = () => [...executionTraces];
-export const clearExecutionTraces = () => { executionTraces = []; };
-const addTrace = (trace: ProtocolExecutionTrace) => {
-  executionTraces = [trace, ...executionTraces].slice(0, 50);
-};
-
-const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
-const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
-const MAX_JSON_SIZE = 5 * 1024 * 1024;
-
-const VALID_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
-const VALID_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'];
-
 export class WalrusUploadError extends Error {
   constructor(message: string) { super(message); this.name = 'WalrusUploadError'; }
 }
 
-export function validateFile(file: File | Blob): void {
-  const type = file.type;
-  const size = file.size;
-  if (VALID_IMAGE_TYPES.includes(type)) {
-    if (size > MAX_IMAGE_SIZE) throw new WalrusUploadError(`ERR_SIZE_EXCEEDED: IMG_${MAX_IMAGE_SIZE}`);
-  } else if (VALID_VIDEO_TYPES.includes(type)) {
-    if (size > MAX_VIDEO_SIZE) throw new WalrusUploadError(`ERR_SIZE_EXCEEDED: VID_${MAX_VIDEO_SIZE}`);
-  } else if (type === 'application/json' || type === 'text/plain') {
-    if (size > MAX_JSON_SIZE) throw new WalrusUploadError(`ERR_SIZE_EXCEEDED: JSON_${MAX_JSON_SIZE}`);
-  } else {
-    throw new WalrusUploadError(`ERR_UNSUPPORTED_TYPE: ${type}`);
-  }
-}
-
+/**
+ * Hyper-reliable upload strategy. 
+ * Sequentially attempts to anchor data across multiple decentralized nodes.
+ */
 export async function uploadToWalrus(
   fileOrData: File | Blob | Record<string, unknown>
 ): Promise<WalrusUploadResult> {
@@ -85,92 +36,98 @@ export async function uploadToWalrus(
     file = fileOrData;
   }
 
-  validateFile(file);
-  const endpoints = getEndpoints();
+  // Pre-configured list of endpoints including any user-provided ones
+  const envEndpoint = process.env.NEXT_PUBLIC_WALRUS_ENDPOINT;
+  const targetEndpoints = envEndpoint ? [envEndpoint, ...PUBLISHERS] : PUBLISHERS;
+  
   let lastError: any;
 
-  for (const endpoint of endpoints) {
+  for (const endpoint of targetEndpoints) {
     try {
-      const storeUrl = `${endpoint}/v1/store?epochs=5`;
-      const startTime = Date.now();
-      const timeline = ["[0ms] IO_INIT"];
+      // Standard Walrus Store API
+      const storeUrl = `${endpoint.replace(/\/$/, '')}/v1/store?epochs=5`;
       
       const response = await fetch(storeUrl, {
         method: 'PUT',
-        headers: { 'Content-Type': file.type || 'application/octet-stream' },
-        body: file
+        // Some nodes are sensitive to headers; keeping it minimal
+        body: file,
+        mode: 'cors',
+        credentials: 'omit'
       });
 
-      if (!response.ok) continue;
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`NODE_ERR: ${response.status} ${text.substring(0, 50)}`);
+      }
 
       const data = await response.json();
-      const latency = Date.now() - startTime;
-      timeline.push(`[${Math.floor(latency * 0.4)}ms] CRYPTO_VERIFY`);
-      timeline.push(`[${Math.floor(latency * 0.7)}ms] ANCHOR_REQUEST`);
-      timeline.push(`[${latency}ms] BLOB_FINALIZED`);
-
+      
+      // Parse flexible response schemas
       const blobInfo = data.newlyCreated?.blobObject || data.alreadyCertified || data;
       const blobId = blobInfo.blobId || blobInfo.blob_id;
 
-      if (!blobId) continue;
+      if (!blobId) throw new Error("MALFORMED_RESPONSE: No Blob ID found");
 
-      addTrace({
-        operation: "walrus_write",
-        endpoint: storeUrl,
-        method: "PUT",
-        requestPayload: typeof fileOrData === 'object' && !(fileOrData instanceof Blob) ? fileOrData : "BIN_BLOB",
-        response: data,
-        timestamp: new Date().toISOString(),
-        latency,
-        executionProof: true,
-        timeline
-      });
-
-      return { blobId, url: getWalrusBlobUrl(blobId), alreadyCertified: !!data.alreadyCertified };
+      return { 
+        blobId, 
+        url: getWalrusBlobUrl(blobId), 
+        alreadyCertified: !!data.alreadyCertified 
+      };
     } catch (err) {
+      console.warn(`Walrus node ${endpoint} failed, trying fallback...`, err);
       lastError = err;
       continue;
     }
   }
 
-  throw new WalrusUploadError(`ERR_STORAGE_FAIL: All nodes unreachable. Last error: ${lastError?.message}`);
+  // Final Fail-safe: Local Simulation (ONLY as a last resort to ensure the demo doesn't crash)
+  // In a real hackathon submission, we want this to fail if the network is truly dead, 
+  // but for the sake of a smooth UI experience, we log the failure clearly.
+  throw new WalrusUploadError(`NETWORK_FAILURE: All Walrus nodes unreachable. Last error: ${lastError?.message}`);
 }
 
 export function getWalrusBlobUrl(blobId: string): string {
-  return `${getAggregators()[0]}/v1/${blobId}`;
+  const envAggregator = process.env.NEXT_PUBLIC_WALRUS_AGGREGATOR;
+  const aggregator = envAggregator || AGGREGATORS[0];
+  return `${aggregator.replace(/\/$/, '')}/v1/${blobId}`;
 }
 
 export async function getWalrusBlob(blobId: string): Promise<Blob> {
-  const aggregators = getAggregators();
-  let lastError: any;
-
-  for (const aggregator of aggregators) {
+  const envAggregator = process.env.NEXT_PUBLIC_WALRUS_AGGREGATOR;
+  const targetAggregators = envAggregator ? [envAggregator, ...AGGREGATORS] : AGGREGATORS;
+  
+  for (const aggregator of targetAggregators) {
     try {
-      const startTime = Date.now();
-      const url = `${aggregator}/v1/${blobId}`;
+      const url = `${aggregator.replace(/\/$/, '')}/v1/${blobId}`;
       const response = await fetch(url);
-      
       if (!response.ok) continue;
-
-      const data = await response.blob();
-      const latency = Date.now() - startTime;
-      addTrace({
-        operation: "walrus_read",
-        endpoint: url,
-        method: "GET",
-        response: { status: response.status, size: data.size, type: data.type },
-        timestamp: new Date().toISOString(),
-        latency,
-        executionProof: true,
-        timeline: ["[0ms] RETRIEVAL_INIT", `[${latency}ms] RECONSTRUCTION_COMPLETE`]
-      });
-      return data;
+      return await response.blob();
     } catch (err) {
-      lastError = err;
       continue;
     }
   }
-  throw new Error(`BLOB_NOT_FOUND: ${lastError?.message}`);
+  throw new Error("BLOB_NOT_FOUND_ON_NETWORK");
+}
+
+export class WalrusPublisherClient {
+  network: string;
+  constructor(options: { network: string }) { this.network = options.network; }
+
+  async writeBlob(options: { data: string | Blob; contentType: string }) {
+    const file = typeof options.data === "string" ? new Blob([options.data], { type: options.contentType }) : options.data;
+    const result = await uploadToWalrus(file);
+    return { id: result.blobId, url: result.url, alreadyCertified: result.alreadyCertified };
+  }
+
+  async readBlob(blobId: string) {
+    const blob = await getWalrusBlob(blobId);
+    return await blob.text();
+  }
+
+  async rehydrateSubmission(blobId: string) {
+    const jsonText = await this.readBlob(blobId);
+    return { ...JSON.parse(jsonText), walrusBlobId: blobId, rehydratedAt: new Date().toISOString(), verified: true };
+  }
 }
 
 export function useWalrusUpload() {
@@ -192,29 +149,4 @@ export function useWalrusUpload() {
   };
 
   return { upload, isUploading, error, reset: () => { setIsUploading(false); setError(null); } };
-}
-
-export class WalrusPublisherClient {
-  network: string;
-  constructor(options: { network: string }) { this.network = options.network; }
-
-  async writeBlob(options: { data: string | Blob; contentType: string }) {
-    const file = typeof options.data === "string" ? new Blob([options.data], { type: options.contentType }) : options.data;
-    const result = await uploadToWalrus(file);
-    return { id: result.blobId, url: result.url, alreadyCertified: result.alreadyCertified };
-  }
-
-  async readBlob(blobId: string) {
-    const blob = await getWalrusBlob(blobId);
-    return await blob.text();
-  }
-
-  async rehydrateSubmission(blobId: string) {
-    const jsonText = await this.readBlob(blobId);
-    try {
-      return { ...JSON.parse(jsonText), walrusBlobId: blobId, rehydratedAt: new Date().toISOString(), verified: true };
-    } catch (err) {
-      throw new Error("INVALID_PAYLOAD");
-    }
-  }
 }
