@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Hero, FeatureGrid } from "@/components/landing/LandingSections";
-import { ArrowRight, MessageSquare, TrendingUp, ShieldCheck, Database, Zap } from "lucide-react";
+import { ArrowRight, MessageSquare, TrendingUp, ShieldCheck, Database, Zap, Lock, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -121,28 +121,61 @@ export default function Home() {
       </section>
 
       {/* Final CTA */}
-      <section className="py-40 relative overflow-hidden">
-        <div className="absolute inset-0 bg-primary/5 -skew-y-3" />
-        <div className="container mx-auto px-6 text-center relative z-10">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="max-w-4xl mx-auto premium-card p-12 md:p-20 border-primary/20 bg-primary/[0.02]"
-          >
-            <h2 className="text-3xl md:text-5xl font-black mb-6 tracking-tighter leading-[0.9]">
-              Ready to Capture<br /><span className="text-primary">Immutable Truth?</span>
+      <section className="py-40 container mx-auto px-6">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="relative max-w-5xl mx-auto overflow-hidden rounded-[48px] border border-white/10 bg-[#050505] shadow-2xl"
+        >
+          {/* Decorative background elements */}
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/20 blur-[120px] -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-cyan-glow/10 blur-[120px] translate-y-1/2 -translate-x-1/2" />
+          
+          <div className="relative p-12 md:p-24 text-center space-y-10">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-primary text-[10px] font-black uppercase tracking-[0.2em] mb-4">
+              <Zap className="w-3 h-3 fill-current" /> Future of Feedback
+            </div>
+            
+            <h2 className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter leading-[0.95] text-white">
+              Ready to Capture<br />
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary via-cyan-glow to-purple-haze">
+                Immutable Truth?
+              </span>
             </h2>
-            <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-xl mx-auto leading-relaxed">
-              Join the Walrus ecosystem. Create decentralized feedback loops and collect verifiable data today.
+            
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto font-medium leading-relaxed">
+              Join the Walrus ecosystem. Create decentralized feedback loops and collect verifiable data today with ProofBoard.
             </p>
-            <Link href="/builder">
-              <Button size="lg" className="h-20 px-14 text-xl font-black rounded-[32px] shadow-[0_20px_50px_rgba(0,112,243,0.3)] transition-all hover:scale-105 active:scale-95">
-                Launch Form Builder
-              </Button>
-            </Link>
-          </motion.div>
-        </div>
+            
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-4">
+              <Link href="/builder">
+                <Button size="lg" className="h-16 px-10 rounded-2xl bg-white text-black font-black text-lg gap-3 shadow-2xl hover:scale-105 transition-all">
+                  Get Started for Free <ArrowRight className="w-5 h-5" />
+                </Button>
+              </Link>
+              <Link href="/verify">
+                <Button variant="outline" size="lg" className="h-16 px-10 rounded-2xl font-bold text-lg border-white/10 hover:bg-white/5 transition-all">
+                  Verify Proof
+                </Button>
+              </Link>
+            </div>
+
+            <div className="pt-12 flex flex-wrap items-center justify-center gap-8 opacity-40 grayscale hover:grayscale-0 transition-all duration-700">
+               <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                 <ShieldCheck className="w-4 h-4" /> Walrus Storage
+               </div>
+               <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
+               <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                 <Lock className="w-4 h-4" /> Seal Encryption
+               </div>
+               <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
+               <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                 <RefreshCw className="w-4 h-4" /> Stateless Audit
+               </div>
+            </div>
+          </div>
+        </motion.div>
       </section>
     </div>
   );
