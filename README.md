@@ -1,55 +1,46 @@
-# ProofBoard: Walrus-Native Dynamic Form Builder
+# ProofBoard | Walrus-Native CAS Primitive
 
-ProofBoard is a decentralized, verifiable form builder and feedback system where anyone can create forms, collect submissions, and verify data independently via immutable Walrus storage.
+ProofBoard is a shardless, content-addressable feedback architecture designed for the Walrus storage layer. It provides a technical framework for provisioning dynamic schemas and anchoring atomic user interactions as immutable blobs without centralized state dependencies.
 
-ProofBoard transforms human input (surveys, bug reports, feature requests) into cryptographically verifiable, independently reconstructable data objects.
+## Technical Architecture
 
-## Core Features
+### 1. Schema Provisioning (CAS)
+Dynamic form definitions are serialized as JSON-LD and provisioned to Walrus aggregator nodes. Every form exists as a unique, content-addressable hash, enabling stateless UI rehydration.
 
-### Walrus-Native Dynamic Builder
-Design custom forms with rich input types (text, select, checkbox, rating, url). Every form schema is anchored directly to Walrus as an immutable blob.
+### 2. Atomic Submission Anchoring
+User interactions are captured at the application edge, hashed, and anchored to Walrus. The system supports 5-epoch retention as a standard settlement parameter for feedback lifecycle management.
 
-### Shareable Decentralized Links
-Generate unique, Walrus-anchored links for every form. Distribute forms across the ecosystem without relying on a centralized database for persistence.
+### 3. Seal Cryptographic Primitives
+Optional AES-GCM client-side encryption provides end-to-end privacy. Data is transformed into a sealed cipher-text before network ingress, ensuring that only the provisioner holds the decryption keys.
 
-### Seal Privacy Integration
-Optional client-side encryption ensures sensitive feedback is protected before it ever leaves the browser. Raw data is never exposed to the storage layer.
+### 4. Verification & Rehydration Protocol
+ProofBoard implements an independent audit layer for rehydrating truth directly from decentralized nodes. This bypasses internal indexing and provides a transparent verification specification for all stored shards.
 
-### Independent Verification Portal
-ProofBoard provides a transparent verification layer where any submission can be cross-referenced against Walrus storage to confirm integrity and authenticity.
+## Core Stack
 
-### Management & Export Console
-Admin dashboard with advanced filtering, status management, and CSV export for Walrus-native submissions.
+- **Persistence**: Walrus CAS (Aggregator/Publisher Nodes)
+- **Privacy**: Seal AES-GCM (Client-side)
+- **Framework**: Next.js 15 (Turbopack)
+- **Telemetry**: Protocol Execution Tracing (PET)
+- **Audit**: VSD (Verification Specification Document)
 
-## Architecture
+## Local Operations
 
-1. Form Builder: Save dynamic schemas as Walrus blobs.
-2. Public Form: Fetch schema via blobId and render UI.
-3. Submission: Anchor response to Walrus with optional Seal encryption.
-4. Admin: Monitor and export decentralized submissions.
+### Environment Configuration
+Ensure your `.env.local` contains valid aggregator and publisher endpoints:
+```bash
+NEXT_PUBLIC_WALRUS_ENDPOINT="https://publisher.walrus.network"
+NEXT_PUBLIC_WALRUS_AGGREGATOR="https://aggregator.walrus.network"
+```
 
-## Technical Guarantees
+### Deployment
+```bash
+npm install
+npm run dev
+```
 
-- No central database for schemas or responses.
-- Stateless recovery: fully reconstruct application state from Walrus blobs.
-- Execution transparency: millisecond-accurate network tracing for all interactions.
-- Zero-dependency verification via VSD (Verification Specification Document).
+## Security & Sovereignty
+Trust is derived from decentralized storage and cryptographic reproducibility. ProofBoard operates on a zero-trust model regarding mutable backends, placing state sovereignty entirely within the content-addressable storage layer.
 
-## Security Model
-
-Trust is derived from cryptographic storage and external reproducibility. ProofBoard assumes no trusted backend or mutable database, placing sovereignty entirely in decentralized storage.
-
-## Development
-
-### Prerequisites
-- Node.js 18+
-- Walrus Testnet/Mainnet Endpoint
-
-### Setup
-1. Clone the repository.
-2. Install dependencies: npm install
-3. Configure .env with Walrus endpoints.
-4. Run locally: npm run dev
-
-### Verification
-Visit /verify to audit any Walrus blobId and confirm protocol integrity.
+---
+**Audit Layer**: Access `/verify?blobId={id}` for independent shard reconstruction.

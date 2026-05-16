@@ -9,7 +9,6 @@ import Link from "next/link";
 export const Hero = () => {
   return (
     <section className="relative min-h-[95vh] flex items-center justify-center overflow-hidden py-32 px-6">
-      {/* Background Orbs */}
       <div className="absolute top-1/4 -left-20 w-[600px] h-[600px] bg-primary/20 rounded-full blur-[140px] animate-pulse pointer-events-none" />
       <div className="absolute bottom-1/4 -right-20 w-[600px] h-[600px] bg-cyan-glow/10 rounded-full blur-[140px] animate-pulse delay-1000 pointer-events-none" />
       
@@ -20,8 +19,8 @@ export const Hero = () => {
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="max-w-6xl mx-auto space-y-10"
         >
-          <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-white/10 bg-white/5 backdrop-blur-md text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-4 shadow-xl">
-            <Zap className="w-4 h-4 fill-current" /> Walrus-Native Feedback Protocol
+          <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-white/10 bg-white/5 backdrop-blur-md text-[10px] font-black uppercase tracking-[0.2em] text-primary mb-4 shadow-xl">
+            <Zap className="w-4 h-4 fill-current" /> Walrus Content-Addressable Protocol
           </div>
           
           <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter leading-[0.9] text-balance">
@@ -29,13 +28,13 @@ export const Hero = () => {
           </h1>
           
           <p className="text-lg md:text-xl lg:text-2xl text-muted-foreground max-w-2xl mx-auto font-medium leading-relaxed opacity-80">
-            The premier platform for builders to capture verified truth. Every submission is anchored as a cryptographically verifiable blob on Walrus.
+            A high-throughput feedback primitive built for the Walrus storage layer. Anchor every user interaction as a cryptographically verifiable shard.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-10">
             <Link href="/demo">
-              <Button size="lg" className="h-20 px-12 text-xl font-bold gap-4 rounded-[28px] bg-primary text-white hover:bg-primary/90 shadow-[0_20px_50px_rgba(0,112,243,0.3)] transition-all hover:scale-105">
-                Launch Demo Mode
+              <Button size="lg" className="h-20 px-12 text-xl font-black gap-4 rounded-[28px] bg-primary text-white hover:bg-primary/90 shadow-[0_20px_50px_rgba(0,112,243,0.3)] transition-all hover:scale-105">
+                Ecosystem Explorer
                 <ArrowRight className="w-7 h-7" />
               </Button>
             </Link>
@@ -43,9 +42,9 @@ export const Hero = () => {
               <Button
                 size="lg"
                 variant="outline"
-                className="h-20 px-12 text-xl font-bold rounded-[28px] border-white/10 hover:bg-white/5 backdrop-blur-md transition-all hover:scale-105"
+                className="h-20 px-12 text-xl font-black rounded-[28px] border-white/10 hover:bg-white/5 backdrop-blur-md transition-all hover:scale-105"
               >
-                Open Builder
+                Provision Form
               </Button>
             </Link>
           </div>
@@ -55,31 +54,31 @@ export const Hero = () => {
   );
 };
 
-export const FeatureGrid = () => {
-  const features = [
+export const CapabilitiesStack = () => {
+  const stack = [
     {
-      title: "Walrus-Native",
-      desc: "Zero-database architecture. Your form schemas and responses are stored as permanent blobs.",
+      label: "CAS Architecture",
+      desc: "Pure Content-Addressable Storage (CAS). Schemas and payloads are referenced via unique Walrus blob identifiers.",
       icon: Database,
-      color: "text-blue-500",
+      accent: "text-blue-500",
     },
     {
-      title: "Seal Privacy",
-      desc: "Client-side encryption for sensitive feedback. Only you hold the keys to decrypt the truth.",
+      label: "Seal Cryptography",
+      desc: "Client-side AES-GCM primitives for sensitive datasets. End-to-end encryption anchored at the application edge.",
       icon: ShieldCheck,
-      color: "text-primary",
+      accent: "text-primary",
     },
     {
-      title: "Audit Ready",
-      desc: "Independent verification portal for all submissions. Cryptographic proof for every bit of data.",
+      label: "Independent Audit",
+      desc: "Cross-platform verification portal. Rehydrate truth directly from the aggregator nodes without internal dependencies.",
       icon: Search,
-      color: "text-cyan-glow",
+      accent: "text-cyan-glow",
     },
     {
-      title: "Dashboard",
-      desc: "Professional management console for tracking, status updates, and CSV data exports.",
+      label: "Operational Ops",
+      desc: "Production-grade console for tracking rehydrated shards, lifecycle management, and CSV-formatted audits.",
       icon: LayoutDashboard,
-      color: "text-purple-500",
+      accent: "text-purple-500",
     },
   ];
 
@@ -87,7 +86,7 @@ export const FeatureGrid = () => {
     <section className="py-40 px-6">
       <div className="container mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {features.map((f, i) => (
+          {stack.map((item, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 20 }}
@@ -96,12 +95,12 @@ export const FeatureGrid = () => {
               transition={{ delay: i * 0.1 }}
               className="premium-card p-10 group"
             >
-              <div className={`w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mb-8 group-hover:bg-white/10 transition-all duration-500 ${f.color}`}>
-                <f.icon className="w-7 h-7" />
+              <div className={`w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mb-8 group-hover:bg-white/10 transition-all duration-500 ${item.accent}`}>
+                <item.icon className="w-7 h-7" />
               </div>
-              <h3 className="text-xl font-bold mb-3 tracking-tight">{f.title}</h3>
+              <h3 className="text-xl font-black mb-3 tracking-tight">{item.label}</h3>
               <p className="text-muted-foreground leading-relaxed text-sm opacity-70 group-hover:opacity-100 transition-opacity">
-                {f.desc}
+                {item.desc}
               </p>
             </motion.div>
           ))}

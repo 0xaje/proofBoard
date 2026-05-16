@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Wallet, Menu, X, ShieldCheck, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-
 import { usePathname } from "next/navigation";
 
 export const Navbar = () => {
@@ -36,11 +35,11 @@ export const Navbar = () => {
     }, 1200);
   };
 
-  const links = [
-    { href: "/demo", label: "Demo Mode" },
-    { href: "/builder", label: "Form Builder" },
-    { href: "/admin", label: "Dashboard" },
-    { href: "/verify", label: "Verification" },
+  const navItems = [
+    { href: "/demo", label: "Explorer" },
+    { href: "/builder", label: "Provision" },
+    { href: "/admin", label: "Console" },
+    { href: "/verify", label: "Audit" },
   ];
 
   return (
@@ -55,17 +54,16 @@ export const Navbar = () => {
           </span>
         </Link>
 
-        {/* Desktop Nav */}
         <div className="hidden md:flex items-center gap-8">
-          {links.map((link) => (
+          {navItems.map((item) => (
             <Link
-              key={link.href}
-              href={link.href}
+              key={item.href}
+              href={item.href}
               className={`text-[10px] font-bold uppercase tracking-widest transition-all hover:text-primary ${
-                pathname === link.href ? "text-primary" : "text-muted-foreground"
+                pathname === item.href ? "text-primary" : "text-muted-foreground"
               }`}
             >
-              {link.label}
+              {item.label}
             </Link>
           ))}
           <Button 
@@ -86,7 +84,6 @@ export const Navbar = () => {
           </Button>
         </div>
 
-        {/* Mobile Toggle */}
         <button
           className="md:hidden text-muted-foreground hover:text-primary p-2"
           onClick={() => setIsOpen(!isOpen)}
@@ -95,7 +92,6 @@ export const Navbar = () => {
         </button>
       </div>
 
-      {/* Mobile Nav */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -105,16 +101,16 @@ export const Navbar = () => {
             className="md:hidden border-b border-white/5 bg-background/95 backdrop-blur-xl overflow-hidden"
           >
             <div className="flex flex-col p-6 gap-6">
-              {links.map((link) => (
+              {navItems.map((item) => (
                 <Link
-                  key={link.href}
-                  href={link.href}
+                  key={item.href}
+                  href={item.href}
                   onClick={() => setIsOpen(false)}
                   className={`text-lg font-bold uppercase tracking-widest ${
-                    pathname === link.href ? "text-primary" : "text-muted-foreground"
+                    pathname === item.href ? "text-primary" : "text-muted-foreground"
                   }`}
                 >
-                  {link.label}
+                  {item.label}
                 </Link>
               ))}
               <Button 
