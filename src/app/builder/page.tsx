@@ -76,42 +76,41 @@ export default function FormBuilderPage() {
   };
 
   const seedDemoForm = () => {
-    setTitle("Project Feedback - Walrus Hackathon");
-    setDescription("We want to hear about your experience building on Walrus. This data is stored permanently and verifiable.");
+    setTitle("Walrus Protocol Audit - Developer Experience");
+    setDescription("Provide technical feedback on the Walrus storage layer, aggregator performance, and SDK stability.");
     setFields([
       {
         id: uuidv4(),
         type: "text",
-        label: "Your Project Name",
+        label: "Aggregator Node ID",
         required: true,
-        placeholder: "e.g. ProofBoard"
+        placeholder: "e.g. FRA-1-Testnet"
       },
       {
         id: uuidv4(),
         type: "select",
-        label: "Primary Ecosystem",
+        label: "Storage Class",
         required: true,
-        options: ["DeFi", "NFTs", "Infrastructure", "Gaming", "Social"]
+        options: ["Erasable", "Permanent", "Epoch-Bound"]
       },
       {
         id: uuidv4(),
         type: "rating",
-        label: "Ease of Integration",
+        label: "Retrieval Speed (TTFB)",
         required: false
       },
       {
         id: uuidv4(),
         type: "textarea",
-        label: "What could be improved?",
+        label: "Observed Consensus Artifacts",
         required: true,
-        placeholder: "Tell us about your developer experience..."
+        placeholder: "Describe any inconsistencies in shard reconstruction..."
       },
       {
         id: uuidv4(),
-        type: "url",
-        label: "GitHub Repository",
-        required: false,
-        placeholder: "https://github.com/..."
+        type: "file",
+        label: "Network Trace / Logs",
+        required: false
       }
     ]);
     toast.info("Demo Form Seeded!");

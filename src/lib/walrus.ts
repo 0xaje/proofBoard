@@ -167,17 +167,18 @@ export async function uploadToWalrus(
     const startTime = Date.now();
     const timeline = ["[0ms] User request initiated"];
 
-    const response = await axios.put(storeUrl, file, {
+    const response = await fetch(storeUrl, {
+      method: 'PUT',
       headers,
-      onUploadProgress: (progressEvent) => {
-        if (options?.onProgress && progressEvent.total) {
-          const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          options.onProgress(progress);
-        }
-      },
+      body: file
     });
 
-    const data = response.data;
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new WalrusUploadError(`Node rejected storage: ${errorText || response.statusText}`);
+    }
+
+    const data = await response.json();
     const latency = Date.now() - startTime;
     timeline.push(`[${Math.floor(latency * 0.4)}ms] Seal encryption verified`);
     timeline.push(`[${Math.floor(latency * 0.7)}ms] Walrus storage request anchored`);

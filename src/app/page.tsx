@@ -8,15 +8,15 @@ import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 
 const PULSE_HISTORY = [
-  { id: 1, type: "Bug Report", user: "0x71c...82a", time: "2 hours ago", title: "UI Artifacts in Blob Explorer", desc: "Found some inconsistent rendering when viewing large video blobs on mobile devices...", reps: 45, comments: 12 },
-  { id: 2, type: "Feature Request", user: "0x44f...19b", time: "5 hours ago", title: "Add Batch Uploads", desc: "It would be great to select multiple blobs at once for the drive integration.", reps: 120, comments: 34 },
-  { id: 3, type: "Survey", user: "0x99a...3c2", time: "1 day ago", title: "Developer Experience Q3", desc: "Feedback on the new Walrus SDK and documentation improvements.", reps: 15, comments: 2 },
+  { id: 1, type: "Blob Index", user: "0x71c...82a", time: "2h ago", title: "Shard Retrieval Optimized", desc: "Successfully optimized TTFB for 50MB blobs across US-East aggregator nodes.", reps: 145, comments: 22 },
+  { id: 2, type: "Protocol", user: "0x44f...19b", time: "5h ago", title: "Epoch Retention Adjusted", desc: "Batch proposal to extend era retention for critical feedback shards to 15 epochs.", reps: 280, comments: 45 },
+  { id: 3, type: "Security", user: "0x99a...3c2", time: "1d ago", title: "Seal Entropy Audit", desc: "Zero-knowledge proof verification passed for the latest Seal encryption cycle.", reps: 95, comments: 8 },
 ];
 
 const LIVE_PULSE_DATA = [
-  { type: "Security", user: "0x11b...4d8", title: "Potential Reentrancy in Staking", desc: "Found a theoretical vulnerability in the staking module, needs review.", reps: 500, comments: 8 },
-  { type: "Enhancement", user: "0x22c...5e9", title: "Optimize Blob Retrieval", desc: "Suggested a caching layer for frequently accessed blobs to improve latency.", reps: 85, comments: 14 },
-  { type: "Bug Report", user: "0x33d...6f0", title: "Login Session Timeout", desc: "Session randomly drops after 5 minutes of inactivity on the dashboard.", reps: 30, comments: 5 },
+  { type: "Network", user: "0x11b...4d8", title: "New Aggregator Provisioned", desc: "Provisioned high-throughput node in FRA-1. Shard distribution balanced.", reps: 50, comments: 2 },
+  { id: 2, type: "Audit", user: "0x22c...5e9", title: "Integrity Scan Complete", desc: "1,200 unique Walrus blobs verified against local storage hashes.", reps: 310, comments: 14 },
+  { id: 3, type: "Storage", user: "0x33d...6f0", title: "Erasure Coding Verified", desc: "Verified 24/32 shard reconstruction for recently anchored feedback blobs.", reps: 120, comments: 5 },
 ];
 
 export default function Home() {

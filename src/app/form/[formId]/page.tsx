@@ -310,11 +310,24 @@ export default function PublicFormPage() {
                       <Input 
                         type="file" 
                         required={field.required}
-                        onChange={(e) => {
+                        onChange={async (e) => {
                           const file = e.target.files?.[0];
                           if (file) {
-                            handleInputChange(field.id, { name: file.name, size: file.size, type: file.type });
-                            toast.info(`File prepared for Walrus anchor.`);
+                            try {
+                              toast.info("Uploading asset to Walrus testnet...");
+                              const { uploadToWalrus } = await import("@/lib/walrus");
+                              const result = await uploadToWalrus(file);
+                              handleInputChange(field.id, { 
+                                name: file.name, 
+                                size: file.size, 
+                                type: file.type,
+                                blobId: result.blobId,
+                                url: result.url
+                              });
+                              toast.success(`Asset anchored: ${result.blobId.slice(0, 8)}...`);
+                            } catch (err) {
+                              toast.error("Walrus asset upload failed.");
+                            }
                           }
                         }}
                         className="hidden"
