@@ -2,78 +2,53 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Shield, Zap, Database, Award } from "lucide-react";
+import { ArrowRight, ShieldCheck, Zap, Database, Search, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 export const Hero = () => {
   return (
-    <section className="relative overflow-hidden pt-20 pb-32">
+    <section className="relative min-h-[95vh] flex items-center justify-center overflow-hidden py-32 px-6">
       {/* Background Orbs */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl -z-10">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-cyan-glow/10 rounded-full blur-[100px]" />
-      </div>
-
-      <div className="container mx-auto px-6 text-center">
+      <div className="absolute top-1/4 -left-20 w-[600px] h-[600px] bg-primary/20 rounded-full blur-[140px] animate-pulse pointer-events-none" />
+      <div className="absolute bottom-1/4 -right-20 w-[600px] h-[600px] bg-cyan-glow/10 rounded-full blur-[140px] animate-pulse delay-1000 pointer-events-none" />
+      
+      <div className="container mx-auto relative z-10 text-center">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="max-w-6xl mx-auto space-y-10"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-primary text-xs font-semibold uppercase tracking-wider mb-8">
-            <Zap className="w-3 h-3" />
-            Built for the Walrus Ecosystem
+          <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-white/10 bg-white/5 backdrop-blur-md text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-4 shadow-xl">
+            <Zap className="w-4 h-4 fill-current" /> Walrus-Native Feedback Protocol
           </div>
-          <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-8 max-w-4xl mx-auto leading-[1.1]">
-            <span className="glow-text bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent">
-              Decentralized Feedback{" "}
-            </span>
-            <span className="text-primary italic">Infrastructure</span>
-            <span className="glow-text bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent">
-              {" "}Layer
-            </span>
+          
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter leading-[0.9] text-balance">
+            Truth is <span className="bg-clip-text text-transparent bg-gradient-to-b from-white to-white/30">Immutable.</span>
           </h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-12 leading-relaxed">
-            ProofBoard is a verifiable decentralized feedback infrastructure layer built on Walrus, 
-            enabling immutable, encrypted, and rehydratable user feedback for the entire ecosystem.
+          
+          <p className="text-lg md:text-xl lg:text-2xl text-muted-foreground max-w-2xl mx-auto font-medium leading-relaxed opacity-80">
+            The premier platform for builders to capture verified truth. Every submission is anchored as a cryptographically verifiable blob on Walrus.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20">
-            <Link href="/explore">
-              <Button size="lg" className="h-14 px-8 text-lg font-semibold gap-2 rounded-2xl glow-border">
-                Start Building
-                <ArrowRight className="w-5 h-5" />
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-10">
+            <Link href="/demo">
+              <Button size="lg" className="h-20 px-12 text-xl font-bold gap-4 rounded-[28px] bg-primary text-white hover:bg-primary/90 shadow-[0_20px_50px_rgba(0,112,243,0.3)] transition-all hover:scale-105">
+                Launch Demo Mode
+                <ArrowRight className="w-7 h-7" />
               </Button>
             </Link>
-            <Button
-              size="lg"
-              variant="outline"
-              className="h-14 px-8 text-lg font-semibold rounded-2xl border-white/10 hover:bg-white/5"
-            >
-              View Leaderboard
-            </Button>
+            <Link href="/builder">
+              <Button
+                size="lg"
+                variant="outline"
+                className="h-20 px-12 text-xl font-bold rounded-[28px] border-white/10 hover:bg-white/5 backdrop-blur-md transition-all hover:scale-105"
+              >
+                Open Builder
+              </Button>
+            </Link>
           </div>
-
-          {/* Hero Asset Frame */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3, duration: 0.8 }}
-            className="relative max-w-5xl mx-auto rounded-[40px] overflow-hidden border border-white/10 shadow-2xl shadow-primary/20 group"
-          >
-            <div className="absolute inset-0 bg-gradient-to-t from-ocean-deep via-transparent to-transparent z-10" />
-            <img 
-              src="/hero-asset.png" 
-              alt="ProofBoard Visualization" 
-              className="w-full aspect-video object-cover transition-transform duration-1000 group-hover:scale-105" 
-            />
-            <div className="absolute bottom-8 left-8 z-20 flex items-center gap-4">
-              <div className="glass-dark px-6 py-3 rounded-2xl border-white/10 flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                <span className="text-sm font-bold tracking-wider uppercase">Network Status: Online</span>
-              </div>
-            </div>
-          </motion.div>
         </motion.div>
       </div>
     </section>
@@ -83,47 +58,50 @@ export const Hero = () => {
 export const FeatureGrid = () => {
   const features = [
     {
-      icon: <Database className="w-6 h-6" />,
-      title: "Walrus-Native Storage",
-      description: "All feedback and rich media are stored permanently and decentralized on Walrus Protocol.",
+      title: "Walrus-Native",
+      desc: "Zero-database architecture. Your form schemas and responses are stored as permanent blobs.",
+      icon: Database,
+      color: "text-blue-500",
     },
     {
-      icon: <Zap className="w-6 h-6" />,
-      title: "AI Analysis",
-      description: "Automated sentiment analysis and bug classification to help builders prioritize what matters.",
+      title: "Seal Privacy",
+      desc: "Client-side encryption for sensitive feedback. Only you hold the keys to decrypt the truth.",
+      icon: ShieldCheck,
+      color: "text-primary",
     },
     {
-      icon: <Award className="w-6 h-6" />,
-      title: "Reputation Score",
-      description: "Earn reputation points for high-quality feedback and contributions to the ecosystem.",
+      title: "Audit Ready",
+      desc: "Independent verification portal for all submissions. Cryptographic proof for every bit of data.",
+      icon: Search,
+      color: "text-cyan-glow",
     },
     {
-      icon: <Shield className="w-6 h-6" />,
-      title: "Secure Verification",
-      description: "On-chain verification of feedback ensure authenticity and prevents spam in the network.",
+      title: "Dashboard",
+      desc: "Professional management console for tracking, status updates, and CSV data exports.",
+      icon: LayoutDashboard,
+      color: "text-purple-500",
     },
   ];
 
   return (
-    <section className="py-24 border-y border-white/5 bg-ocean-surface/30">
-      <div className="container mx-auto px-6">
+    <section className="py-40 px-6">
+      <div className="container mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {features.map((feature, index) => (
+          {features.map((f, i) => (
             <motion.div
-              key={index}
+              key={i}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              whileHover={{ y: -10, scale: 1.02 }}
-              transition={{ delay: index * 0.1, duration: 0.3 }}
               viewport={{ once: true }}
-              className="glass-dark p-8 rounded-3xl border-white/5 hover:border-primary/30 transition-all group cursor-default"
+              transition={{ delay: i * 0.1 }}
+              className="premium-card p-10 group"
             >
-              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-6 group-hover:scale-110 transition-transform">
-                {feature.icon}
+              <div className={`w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mb-8 group-hover:bg-white/10 transition-all duration-500 ${f.color}`}>
+                <f.icon className="w-7 h-7" />
               </div>
-              <h3 className="text-xl font-bold mb-4">{feature.title}</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                {feature.description}
+              <h3 className="text-xl font-bold mb-3 tracking-tight">{f.title}</h3>
+              <p className="text-muted-foreground leading-relaxed text-sm opacity-70 group-hover:opacity-100 transition-opacity">
+                {f.desc}
               </p>
             </motion.div>
           ))}

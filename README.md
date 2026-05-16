@@ -1,106 +1,55 @@
-# ProofBoard: A Verifiable Decentralized Feedback Protocol for the Walrus Ecosystem
+# ProofBoard: Walrus-Native Dynamic Form Builder
 
-ProofBoard is a decentralized feedback and reputation infrastructure layer built on top of Walrus with privacy guarantees powered by Seal. It transforms feedback (bugs, feature requests, reports, surveys) into cryptographically verifiable, independently reconstructable data objects stored on decentralized storage.
+ProofBoard is a decentralized, verifiable form builder and feedback system where anyone can create forms, collect submissions, and verify data independently via immutable Walrus storage.
 
-ProofBoard is not merely a frontend application; it is a protocol for verifiable human input.
+ProofBoard transforms human input (surveys, bug reports, feature requests) into cryptographically verifiable, independently reconstructable data objects.
 
-## The Protocol Thesis
+## Core Features
 
-Traditional feedback systems rely on centralized databases, mutable records, and platform-controlled trust. ProofBoard replaces this with immutable, verifiable, and externally auditable feedback stored on Walrus.
+### Walrus-Native Dynamic Builder
+Design custom forms with rich input types (text, select, checkbox, rating, url). Every form schema is anchored directly to Walrus as an immutable blob.
 
-Every submission is:
-- Encrypted at the edge via Seal (optional).
-- Stored as a permanent blob on Walrus.
-- Independently verifiable via blobId.
-- Reconstructable without reliance on the ProofBoard application layer.
+### Shareable Decentralized Links
+Generate unique, Walrus-anchored links for every form. Distribute forms across the ecosystem without relying on a centralized database for persistence.
 
-## Architecture Overview
+### Seal Privacy Integration
+Optional client-side encryption ensures sensitive feedback is protected before it ever leaves the browser. Raw data is never exposed to the storage layer.
 
-### 1. Client Layer
-- Next.js 15 frontend architecture.
-- Dynamic form builder and submission engine.
-- Client-side Seal encryption transformation.
+### Independent Verification Portal
+ProofBoard provides a transparent verification layer where any submission can be cross-referenced against Walrus storage to confirm integrity and authenticity.
 
-### 2. Protocol Layer
-- Walrus blob storage for immutable feedback objects.
-- Blob-based content addressing (zero reliance on traditional database IDs).
+### Management & Export Console
+Admin dashboard with advanced filtering, status management, and CSV export for Walrus-native submissions.
 
-### 3. Verification Layer
-- Independent audit engine via the /verify portal.
-- Raw protocol inspection and direct Walrus response analysis.
-- CLI-style verification simulation for developer audits.
+## Architecture
 
-### 4. Integrity & Resilience Layer
-- Real-time execution trace logging.
-- Failure resilience via exponential backoff and randomized retry intervals.
-- Adversarial corruption detection and payload validation.
+1. Form Builder: Save dynamic schemas as Walrus blobs.
+2. Public Form: Fetch schema via blobId and render UI.
+3. Submission: Anchor response to Walrus with optional Seal encryption.
+4. Admin: Monitor and export decentralized submissions.
 
-## Data Lifecycle
+## Technical Guarantees
 
-1. User Input Capture
-2. Client-Side Encryption (Seal)
-3. Walrus Blob Storage Anchoring
-4. Blob ID Generation
-5. Independent Verification (UI, CLI, or External HTTP)
-6. Stateless State Rehydration
+- No central database for schemas or responses.
+- Stateless recovery: fully reconstruct application state from Walrus blobs.
+- Execution transparency: millisecond-accurate network tracing for all interactions.
+- Zero-dependency verification via VSD (Verification Specification Document).
 
-## Technical Implementation Details
+## Security Model
 
-### Walrus-Native Storage
-All submissions are stored as immutable blobs on the Walrus network. No centralized database is required for persistence or state management.
+Trust is derived from cryptographic storage and external reproducibility. ProofBoard assumes no trusted backend or mutable database, placing sovereignty entirely in decentralized storage.
 
-### Client-Side Privacy (Seal)
-Sensitive feedback is transformed before storage using Seal. 
-- Encryption occurs prior to network transmission.
-- Raw data is never exposed to the storage layer.
-- Privacy is entirely user-controlled.
+## Development
 
-### Zero-Dependency Verification Spec (VSD)
-Every blob can be verified externally using standard tools such as curl and JSON parsers. No ProofBoard code is required for a complete audit of the stored truth.
+### Prerequisites
+- Node.js 18+
+- Walrus Testnet/Mainnet Endpoint
 
-### Execution Transparency Layer
-Every action is traceable through:
-- Raw HTTP request and response logging.
-- Detailed execution timelines with millisecond-level accuracy.
-- Transparent endpoint and aggregator tracking.
+### Setup
+1. Clone the repository.
+2. Install dependencies: npm install
+3. Configure .env with Walrus endpoints.
+4. Run locally: npm run dev
 
-### Stateless State Rehydration
-ProofBoard can fully reconstruct its application state from a single blobId. Even if the local cache is wiped or the server state is lost, Walrus remains the absolute source of truth.
-
-## Trust Model
-
-ProofBoard operates on a trust-minimized architecture:
-- No trusted backend requirement.
-- No mutable database dependency.
-- No UI-dependent verification assumptions.
-
-Trust is derived exclusively from cryptographic storage and external reproducibility.
-
-## Verification Guarantees
-
-Each feedback object is:
-- Externally retrievable via Walrus aggregators.
-- Independently verifiable via VSD.
-- Cryptographically consistent and UI-independent.
-- Storage-anchored with permanent integrity.
-
-## Protocol Principles
-
-### 1. Verifiability First
-Every piece of data must be independently confirmable by any third party.
-
-### 2. Storage Sovereignty
-Data exists on the decentralized network, not in transient application memory.
-
-### 3. Trust Minimization
-The system eliminates reliance on the application layer for truth maintenance.
-
-## Use Cases
-- Decentralized bug reporting for DAOs and Web3 protocols.
-- Community governance and verifiable feedback layers.
-- Audit-friendly product intelligence systems.
-- Reputation-based contribution tracking.
-
-## Summary
-
-ProofBoard is a verifiable feedback protocol layer that transforms human input into immutable, auditable data stored on decentralized infrastructure. It replaces platform-dependent trust with cryptographic verifiability and external reproducibility.
+### Verification
+Visit /verify to audit any Walrus blobId and confirm protocol integrity.

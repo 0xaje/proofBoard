@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { Hero, FeatureGrid } from "@/components/landing/LandingSections";
-import { ArrowRight, Star, MessageSquare, TrendingUp } from "lucide-react";
+import { ArrowRight, MessageSquare, TrendingUp, ShieldCheck, Database, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -40,75 +41,76 @@ export default function Home() {
       <FeatureGrid />
       
       {/* Social Proof / Activity Section */}
-      <section className="py-24 container mx-auto px-6 overflow-hidden">
-        <div className="flex flex-col md:flex-row items-end justify-between mb-12 gap-6">
-          <div className="max-w-2xl">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 flex items-center gap-3">
+      <section className="py-40 container mx-auto px-6 overflow-hidden">
+        <div className="flex flex-col md:flex-row items-end justify-between mb-16 gap-10">
+          <div className="max-w-2xl space-y-4">
+            <h2 className="text-3xl md:text-5xl font-black tracking-tighter flex items-center gap-4">
               Ecosystem Pulse
               <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary/40 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-primary shadow-[0_0_15px_rgba(0,112,243,0.8)]"></span>
               </span>
             </h2>
-            <p className="text-muted-foreground text-lg">
-              ProofBoard is a verifiable decentralized feedback infrastructure layer built on Walrus, enabling immutable, encrypted, and rehydratable user feedback.
+            <p className="text-muted-foreground text-lg leading-relaxed max-w-xl">
+              ProofBoard is a Walrus-native dynamic form builder. Collect immutable feedback, surveys, and bug reports without a centralized backend.
             </p>
-            <div className="flex flex-wrap gap-4 mt-6">
-              <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-green-500/10 border border-green-500/20 text-[10px] font-bold text-green-500 uppercase tracking-widest">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" /> Infrastructure Mode: Active
+            <div className="flex flex-wrap gap-4 pt-2">
+              <div className="flex items-center gap-2 px-4 py-1.5 rounded-xl bg-white/5 border border-white/10 text-[10px] font-bold text-white/60 uppercase tracking-widest">
+                <Database className="w-3 h-3 text-primary" /> Walrus Storage
               </div>
-              <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-[10px] font-bold text-primary uppercase tracking-widest">
-                Storage: Walrus Native
+              <div className="flex items-center gap-2 px-4 py-1.5 rounded-xl bg-white/5 border border-white/10 text-[10px] font-bold text-white/60 uppercase tracking-widest">
+                <ShieldCheck className="w-3 h-3 text-cyan-glow" /> Seal Protected
               </div>
-              <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-[10px] font-bold text-blue-500 uppercase tracking-widest">
-                Security: Seal Encrypted
+              <div className="flex items-center gap-2 px-4 py-1.5 rounded-xl bg-white/5 border border-white/10 text-[10px] font-bold text-white/60 uppercase tracking-widest">
+                <Zap className="w-3 h-3 text-amber-500" /> Real-time Verifiability
               </div>
             </div>
           </div>
-          <Button variant="link" className="text-primary gap-2 p-0">
-            View All Activity <ArrowRight className="w-4 h-4" />
+          <Button variant="link" className="text-primary font-bold text-lg gap-3 p-0 hover:no-underline group">
+            Global Activity Feed <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform" />
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 h-[350px]">
-          <AnimatePresence>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 h-[400px]">
+          <AnimatePresence mode="popLayout">
             {activities.map((activity) => (
               <motion.div 
                 key={activity.id}
-                initial={{ opacity: 0, y: -20, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 20, scale: 0.95 }}
-                transition={{ duration: 0.4 }}
-                className="glass-dark p-6 rounded-3xl border-white/5 relative group h-full flex flex-col"
+                layout
+                initial={{ opacity: 0, x: 50, scale: 0.9 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                exit={{ opacity: 0, x: -50, scale: 0.9 }}
+                transition={{ duration: 0.5, ease: "circOut" }}
+                className="premium-card p-8 relative flex flex-col group h-full"
               >
-                <div className="absolute top-0 right-0 p-4">
-                  <div className="bg-primary/20 text-primary text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-tighter">
+                <div className="absolute top-0 right-0 p-6">
+                  <div className="bg-primary/10 text-primary text-[10px] font-black px-3 py-1.5 rounded-lg uppercase tracking-widest border border-primary/20">
                     {activity.type}
                   </div>
                 </div>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-full bg-zinc-800 border border-white/10" />
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-white/10 to-transparent border border-white/5" />
                   <div>
-                    <div className="text-sm font-bold">{activity.user}</div>
-                    <div className="text-[10px] text-muted-foreground">{activity.time}</div>
+                    <div className="text-base font-bold text-white">{activity.user}</div>
+                    <div className="text-xs text-muted-foreground font-medium">{activity.time}</div>
                   </div>
                 </div>
-                <h4 className="font-bold mb-2 line-clamp-1">{activity.title}</h4>
-                <p className="text-sm text-muted-foreground mb-6 line-clamp-3 flex-1">
-                  {activity.desc}
+                <h4 className="text-xl font-bold mb-3 tracking-tight group-hover:text-primary transition-colors line-clamp-1">{activity.title}</h4>
+                <p className="text-sm text-muted-foreground/80 mb-8 line-clamp-3 leading-relaxed flex-1 italic">
+                  "{activity.desc}"
                 </p>
-                <div className="flex items-center justify-between pt-4 border-t border-white/5 mt-auto">
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <MessageSquare className="w-3 h-3" /> {activity.comments}
+                <div className="flex items-center justify-between pt-6 border-t border-white/5 mt-auto">
+                  <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground">
+                      <MessageSquare className="w-4 h-4" /> {activity.comments}
                     </div>
-                    <div className="flex items-center gap-1 text-xs text-green-500 font-bold">
-                      <TrendingUp className="w-3 h-3" /> +{activity.reps} Rep
+                    <div className="flex items-center gap-2 text-xs font-black text-primary">
+                      <TrendingUp className="w-4 h-4" /> +{activity.reps} REP
                     </div>
                   </div>
-                  <div className="flex -space-x-2">
+                  <div className="flex -space-x-3">
                     {[1, 2, 3].map((v) => (
-                      <div key={v} className="w-6 h-6 rounded-full border border-ocean-deep bg-zinc-800" />
+                      <div key={v} className="w-8 h-8 rounded-full border-2 border-ocean-deep bg-zinc-900 shadow-xl" />
                     ))}
                   </div>
                 </div>
@@ -119,17 +121,27 @@ export default function Home() {
       </section>
 
       {/* Final CTA */}
-      <section className="py-24 bg-primary/5 border-t border-white/5">
-        <div className="container mx-auto px-6 text-center">
-          <div className="max-w-3xl mx-auto glass p-12 rounded-[40px] border-primary/20">
-            <h2 className="text-4xl font-bold mb-6">Ready to integrate the infrastructure?</h2>
-            <p className="text-xl text-muted-foreground mb-10">
-              Deploy ProofBoard's verifiable data system to your project and start collecting immutable feedback on Walrus.
+      <section className="py-40 relative overflow-hidden">
+        <div className="absolute inset-0 bg-primary/5 -skew-y-3" />
+        <div className="container mx-auto px-6 text-center relative z-10">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="max-w-4xl mx-auto premium-card p-12 md:p-20 border-primary/20 bg-primary/[0.02]"
+          >
+            <h2 className="text-3xl md:text-5xl font-black mb-6 tracking-tighter leading-[0.9]">
+              Ready to Capture<br /><span className="text-primary">Immutable Truth?</span>
+            </h2>
+            <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-xl mx-auto leading-relaxed">
+              Join the Walrus ecosystem. Create decentralized feedback loops and collect verifiable data today.
             </p>
-            <Button size="lg" className="h-14 px-10 text-lg font-bold rounded-2xl shadow-2xl shadow-primary/20">
-              Get Started Now
-            </Button>
-          </div>
+            <Link href="/builder">
+              <Button size="lg" className="h-20 px-14 text-xl font-black rounded-[32px] shadow-[0_20px_50px_rgba(0,112,243,0.3)] transition-all hover:scale-105 active:scale-95">
+                Launch Form Builder
+              </Button>
+            </Link>
+          </motion.div>
         </div>
       </section>
     </div>

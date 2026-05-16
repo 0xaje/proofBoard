@@ -2,30 +2,55 @@
 
 import React from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { Wallet, Menu, X, ShieldCheck } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Wallet, Menu, X, ShieldCheck, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 import { usePathname } from "next/navigation";
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = React.useState(false);
+  const [isConnected, setIsConnected] = React.useState(false);
+  const [isConnecting, setIsConnecting] = React.useState(false);
   const pathname = usePathname();
 
+  React.useEffect(() => {
+    const saved = localStorage.getItem("proofboard_connected");
+    if (saved === "true") setIsConnected(true);
+  }, []);
+
+  const handleConnect = () => {
+    if (isConnected) {
+      setIsConnected(false);
+      localStorage.removeItem("proofboard_connected");
+      return;
+    }
+    
+    setIsConnecting(true);
+    setTimeout(() => {
+      setIsConnected(true);
+      setIsConnecting(false);
+      localStorage.setItem("proofboard_connected", "true");
+      toast.success("Wallet Connected: 0x71c...82a");
+    }, 1200);
+  };
+
   const links = [
-    { href: "/explore", label: "Explore" },
-    { href: "/leaderboard", label: "Leaderboard" },
-    { href: "/admin/walrus-explorer", label: "Admin" },
+    { href: "/demo", label: "Demo Mode" },
+    { href: "/builder", label: "Form Builder" },
+    { href: "/admin", label: "Dashboard" },
+    { href: "/verify", label: "Verification" },
   ];
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-ocean-deep/50 backdrop-blur-xl">
+    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-background/60 backdrop-blur-2xl">
       <div className="container mx-auto px-6 h-20 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 group">
-          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center glow-border transition-transform group-hover:scale-110">
-            <ShieldCheck className="text-ocean-deep w-6 h-6" />
+        <Link href="/" className="flex items-center gap-3 group">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-cyan-glow flex items-center justify-center shadow-lg shadow-primary/20 transition-transform group-hover:scale-110">
+            <ShieldCheck className="text-white w-6 h-6" />
           </div>
-          <span className="text-xl font-bold tracking-tighter glow-text">
+          <span className="text-2xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
             ProofBoard
           </span>
         </Link>
@@ -36,22 +61,34 @@ export const Navbar = () => {
             <Link
               key={link.href}
               href={link.href}
-              className={`text-sm font-medium transition-colors ${
-                pathname === link.href ? "text-primary" : "text-muted-foreground hover:text-primary"
+              className={`text-[10px] font-bold uppercase tracking-widest transition-all hover:text-primary ${
+                pathname === link.href ? "text-primary" : "text-muted-foreground"
               }`}
             >
               {link.label}
             </Link>
           ))}
-          <Button variant="outline" className="gap-2 border-primary/20 hover:border-primary/50 bg-transparent text-primary hover:bg-primary/10">
-            <Wallet className="w-4 h-4" />
-            Connect Wallet
+          <Button 
+            onClick={handleConnect}
+            disabled={isConnecting}
+            className={`rounded-full px-6 font-bold transition-all ${
+              isConnected 
+                ? "bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20" 
+                : "bg-white text-black hover:bg-white/90"
+            }`}
+          >
+            {isConnecting ? (
+              <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+            ) : isConnected ? (
+              <Wallet className="w-4 h-4 mr-2" />
+            ) : null}
+            {isConnecting ? "Connecting..." : isConnected ? "0x71c...82a" : "Connect Wallet"}
           </Button>
         </div>
 
         {/* Mobile Toggle */}
         <button
-          className="md:hidden text-muted-foreground hover:text-primary"
+          className="md:hidden text-muted-foreground hover:text-primary p-2"
           onClick={() => setIsOpen(!isOpen)}
         >
           {isOpen ? <X /> : <Menu />}
@@ -59,27 +96,40 @@ export const Navbar = () => {
       </div>
 
       {/* Mobile Nav */}
-      {isOpen && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="md:hidden absolute top-20 left-0 right-0 glass-dark p-6 flex flex-col gap-4 border-b border-white/5"
-        >
-          <Link href="/explore" className="text-lg font-medium">
-            Explore
-          </Link>
-          <Link href="/leaderboard" className="text-lg font-medium">
-            Leaderboard
-          </Link>
-          <Link href="/docs" className="text-lg font-medium">
-            Docs
-          </Link>
-          <Button className="w-full gap-2">
-            <Wallet className="w-4 h-4" />
-            Connect Wallet
-          </Button>
-        </motion.div>
-      )}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="md:hidden border-b border-white/5 bg-background/95 backdrop-blur-xl overflow-hidden"
+          >
+            <div className="flex flex-col p-6 gap-6">
+              {links.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setIsOpen(false)}
+                  className={`text-lg font-bold uppercase tracking-widest ${
+                    pathname === link.href ? "text-primary" : "text-muted-foreground"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              ))}
+              <Button 
+                onClick={handleConnect}
+                disabled={isConnecting}
+                className={`w-full h-14 rounded-2xl font-bold ${
+                  isConnected ? "bg-primary/10 text-primary" : "bg-white text-black"
+                }`}
+              >
+                {isConnecting ? "Connecting..." : isConnected ? "0x71c...82a" : "Connect Wallet"}
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
 };

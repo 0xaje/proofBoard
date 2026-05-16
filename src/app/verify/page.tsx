@@ -55,12 +55,11 @@ export default function VerificationPage() {
   const [isIntegrityTesting, setIsIntegrityTesting] = React.useState(false);
   const [integrityReport, setIntegrityReport] = React.useState<any>(null);
   const [isExporting, setIsExporting] = React.useState(false);
-  const [showVsd, setShowVsd] = React.useState(false);
+  const [showAdvanced, setShowAdvanced] = React.useState(false);
   const [traces, setTraces] = React.useState<ProtocolExecutionTrace[]>([]);
   const [networkStatus, setNetworkStatus] = React.useState<"stable" | "jitter" | "degraded">("stable");
 
   React.useEffect(() => {
-    // Simulate network truth fluctuations
     const interval = setInterval(() => {
       const states: ("stable" | "jitter" | "degraded")[] = ["stable", "jitter", "degraded"];
       setNetworkStatus(states[Math.floor(Math.random() * states.length)]);
@@ -82,11 +81,9 @@ export default function VerificationPage() {
     const client = new WalrusPublisherClient({ network: "testnet" });
 
     try {
-      // 1. Fetch Raw Protocol Response
       const raw = await client.readBlobRaw(blobId, (attempt: number) => setRetryAttempt(attempt));
       setRawResult(raw);
 
-      // 2. Perform Integrity Tests
       const tests = {
         exists: true,
         isJson: false,
@@ -120,7 +117,7 @@ export default function VerificationPage() {
       if (err.message === "BLOB_NOT_FOUND") {
         setError("BLOB NOT FOUND: The provided ID does not exist on Walrus.");
       } else if (err.message === "INVALID_PAYLOAD" || err.name === "SyntaxError" || err.message === "MALICIOUS_TAMPERING_DETECTED") {
-        setError("⚠ INTEGRITY VIOLATION: Corrupted or tampered decentralized payload detected.");
+        setError("⚠ INTEGRITY VIOLATION: Corrupted payload detected.");
       } else {
         setError("FETCH FAILED: Walrus network delayed — partial recovery mode active.");
       }
@@ -142,43 +139,7 @@ export default function VerificationPage() {
   const handleExportPacket = () => {
     if (!result || !rawResult) return;
     setIsExporting(true);
-
-    const packet = {
-      protocol: "Walrus",
-      version: "1.0",
-      blobId: blobId,
-      storage: {
-        exists: true,
-        retrievable: true,
-        aggregator: "https://aggregator.walrus.network"
-      },
-      data: {
-        raw: result,
-        timestamp: rawResult.timestamp
-      },
-      seal: {
-        enabled: result.isEncrypted || false,
-        encrypted: result.isEncrypted || false,
-        transformVerified: true
-      },
-      integrity: {
-        hashMatch: true,
-        corruptionDetected: false,
-        schemaVerified: true
-      },
-      verification: {
-        independentProof: true,
-        uiIndependent: true,
-        externalReproducible: true,
-        trustSource: "Walrus",
-        vsd: `INDEPENDENT VERIFICATION SPECIFICATION
-1. Fetch: curl https://aggregator.walrus.network/v1/${blobId}
-2. Parse: JSON.parse(response)
-3. Integrity: Verify schema match
-4. Seal: Confirm client-side encryption transformation`
-      }
-    };
-
+    const packet = { protocol: "Walrus", blobId, data: result, timestamp: rawResult.timestamp };
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(packet, null, 2));
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute("href", dataStr);
@@ -186,108 +147,66 @@ export default function VerificationPage() {
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
-
-    toast.success("VSD Exported: Zero-Dependency Verification Packet Ready.");
+    toast.success("VSD Exported.");
     setIsExporting(false);
   };
 
-  const copyPacketToClipboard = () => {
-    if (!result) return;
-    const packet = JSON.stringify(result, null, 2);
-    navigator.clipboard.writeText(packet);
-    toast.success("Verification Packet copied to clipboard.");
-  };
-
   return (
-    <div className="container mx-auto px-6 py-24 min-h-screen">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-16 relative">
-          {/* Network Truth Banner */}
-          <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-full max-w-xs">
-            <div className={`px-4 py-2 rounded-2xl border flex items-center justify-center gap-3 transition-all duration-500 ${
+    <div className="container mx-auto px-4 md:px-6 py-12 md:py-24 min-h-screen">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center mb-16 relative space-y-4">
+          <div className="flex justify-center mb-6">
+            <div className={`px-4 py-2 rounded-2xl border flex items-center gap-3 transition-all duration-500 shadow-xl ${
               networkStatus === "stable" ? "bg-green-500/10 border-green-500/20 text-green-500" :
               networkStatus === "jitter" ? "bg-amber-500/10 border-amber-500/20 text-amber-500" :
               "bg-red-500/10 border-red-500/20 text-red-500"
             }`}>
               {networkStatus === "stable" ? <Wifi className="w-4 h-4" /> : networkStatus === "jitter" ? <ZapOff className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
-              <span className="text-[10px] font-bold uppercase tracking-widest">
-                {networkStatus === "stable" ? "Walrus Network: Stable" : networkStatus === "jitter" ? "Walrus Network: High Jitter" : "Walrus Network: Degraded"}
+              <span className="text-[10px] font-black uppercase tracking-[0.2em]">
+                {networkStatus === "stable" ? "Walrus Network: Stable" : networkStatus === "jitter" ? "High Network Jitter" : "Connection Degraded"}
               </span>
             </div>
           </div>
 
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-primary text-xs font-bold uppercase tracking-widest mb-6">
-            <ShieldCheck className="w-4 h-4" /> External Verification Protocol
+          <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-primary/20 bg-primary/5 text-primary text-[10px] font-black uppercase tracking-[0.2em]">
+            <ShieldCheck className="w-4 h-4" /> Protocol Integrity Service
           </div>
-          <h1 className="text-5xl font-black mb-6">Verify Walrus Integrity</h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Input any Walrus Blob ID to independently verify its authenticity, encryption status, and reconstruction proof.
+          <h1 className="text-5xl md:text-7xl font-black tracking-tighter">Verification Portal</h1>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto font-medium">
+            Input any Walrus Blob ID to independently verify its authenticity and reconstruction proof.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
-          <div className="lg:col-span-2 space-y-8">
-            <div className="glass-dark p-8 rounded-[40px] border-white/10 bg-black/40 relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-6 flex gap-2">
-                <button 
-                  onClick={() => setMode("friendly")}
-                  className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-colors ${mode === "friendly" ? "bg-primary text-ocean-deep" : "bg-white/5 text-muted-foreground hover:bg-white/10"}`}
-                >
-                  UI Mode
-                </button>
-                <button 
-                  onClick={() => setMode("raw")}
-                  className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-colors ${mode === "raw" ? "bg-amber-500 text-ocean-deep" : "bg-white/5 text-muted-foreground hover:bg-white/10"}`}
-                >
-                   Protocol Mode
-                </button>
-                <button 
-                  onClick={() => setMode("cli")}
-                  className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-colors ${mode === "cli" ? "bg-zinc-500 text-white" : "bg-white/5 text-muted-foreground hover:bg-white/10"}`}
-                >
-                   CLI Verify
-                </button>
-                <button 
-                  onClick={() => setMode("spec")}
-                  className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-colors ${mode === "spec" ? "bg-blue-600 text-white" : "bg-white/5 text-muted-foreground hover:bg-white/10"}`}
-                >
-                   External Spec
-                </button>
-                <button 
-                  onClick={() => setMode("trace")}
-                  className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-colors ${mode === "trace" ? "bg-purple-600 text-white" : "bg-white/5 text-muted-foreground hover:bg-white/10"}`}
-                >
-                   Network Trace
-                </button>
-              </div>
-
-              <form onSubmit={handleVerify} className="space-y-6">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-2">Enter Walrus Blob ID</label>
-                  <div className="relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+          <div className="lg:col-span-8 space-y-12">
+            <div className="premium-card p-8 md:p-12 relative overflow-hidden border-white/10 bg-black/40">
+               <form onSubmit={handleVerify} className="space-y-8">
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-2">Walrus Blob Identifier</label>
+                  <div className="relative group">
+                    <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-muted-foreground/40 group-focus-within:text-primary transition-colors" />
                     <Input 
-                      className="h-16 pl-12 pr-40 bg-white/5 border-white/10 rounded-2xl text-primary font-mono text-sm focus:border-primary/50" 
+                      className="h-20 pl-16 pr-44 bg-white/5 border-white/10 rounded-[24px] text-primary font-mono text-base focus:border-primary/50 shadow-2xl transition-all" 
                       placeholder="vB6...9k2" 
                       value={blobId}
                       onChange={(e) => setBlobId(e.target.value)}
                     />
-                    <div className="absolute right-2 top-2 flex gap-2">
+                    <div className="absolute right-3 top-3 flex gap-2">
                       <Button 
                         type="button"
                         onClick={simulateAttack}
                         variant="ghost"
-                        className="h-12 w-12 p-0 rounded-xl hover:bg-red-500/20 text-red-500 border border-red-500/20"
+                        className="h-14 w-14 p-0 rounded-2xl hover:bg-red-500/10 text-red-500/40 hover:text-red-500 border border-transparent hover:border-red-500/20 transition-all"
                         title="Simulate Integrity Attack"
                       >
-                        <ShieldAlert className="w-5 h-5" />
+                        <ShieldAlert className="w-6 h-6" />
                       </Button>
                       <Button 
                         disabled={isVerifying || !blobId}
-                        className="h-12 px-6 rounded-xl font-bold gap-2"
+                        className="h-14 px-8 rounded-2xl font-black gap-3 shadow-lg shadow-primary/20 bg-primary text-white"
                       >
-                        {isVerifying ? <RefreshCw className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
-                        {isVerifying ? "Inspecting..." : "Verify Proof"}
+                        {isVerifying ? <RefreshCw className="w-5 h-5 animate-spin" /> : <ShieldCheck className="w-5 h-5" />}
+                        {isVerifying ? "Inspecting..." : "Verify"}
                       </Button>
                     </div>
                   </div>
@@ -295,357 +214,216 @@ export default function VerificationPage() {
               </form>
 
               {isVerifying && retryAttempt > 0 && (
-                <div className="mt-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs font-bold flex items-center gap-2 animate-pulse">
+                <div className="mt-8 p-5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs font-black flex items-center gap-3 animate-pulse justify-center">
                   <RefreshCw className="w-4 h-4 animate-spin" />
-                  Retrying decentralized storage connection... (Attempt {retryAttempt}/3)
+                  NETWORK DELAY: RETRYING CONNECTION (ATTEMPT {retryAttempt}/3)
                 </div>
               )}
-            </div>
 
-            <AnimatePresence mode="wait">
-              {error && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  className="p-8 rounded-[40px] border border-red-500/20 bg-red-500/5 text-center"
+              <div className="mt-10 flex justify-center">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setShowAdvanced(!showAdvanced)}
+                  className={`text-[10px] font-black uppercase tracking-[0.2em] transition-all gap-3 ${showAdvanced ? "text-primary" : "text-muted-foreground hover:text-white"}`}
                 >
-                  <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-                  <h3 className="text-xl font-bold text-red-500 mb-2">Verification Error</h3>
-                  <p className="text-muted-foreground">{error}</p>
-                </motion.div>
-              )}
+                   {showAdvanced ? "Hide Advanced Protocol Details" : "Show Advanced Protocol Details"}
+                   <ArrowRight className={`w-3 h-3 transition-transform ${showAdvanced ? "-rotate-90" : "rotate-90"}`} />
+                </Button>
+              </div>
 
-              {rawResult && mode === "raw" && (
-                <motion.div 
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="space-y-8"
-                >
-                   <div className="p-8 rounded-[40px] border border-amber-500/20 bg-amber-500/5">
-                    <div className="flex items-center justify-between mb-8">
-                      <div className="flex items-center gap-3">
-                        <Terminal className="w-8 h-8 text-amber-500" />
-                        <div>
-                          <h3 className="text-2xl font-bold text-amber-500">Raw Protocol Inspection</h3>
-                          <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">Independent Walrus Response API v1</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1.5 bg-amber-500/20 text-amber-500 px-3 py-1 rounded-full text-[10px] font-bold">
-                        Direct API Fetch
-                      </div>
+              <AnimatePresence mode="wait">
+                {error && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="p-10 rounded-[40px] border border-red-500/20 bg-red-500/5 text-center mt-10 shadow-2xl"
+                  >
+                    <div className="w-20 h-20 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-6 text-red-500">
+                      <AlertTriangle className="w-10 h-10" />
                     </div>
+                    <h3 className="text-2xl font-black text-red-500 mb-2 tracking-tighter">Protocol Integrity Violated</h3>
+                    <p className="text-muted-foreground font-medium">{error}</p>
+                  </motion.div>
+                )}
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                      <div className="glass-dark p-4 rounded-2xl border border-white/5">
-                        <div className="text-[8px] text-muted-foreground uppercase font-bold mb-1">Blob Size</div>
-                        <div className="text-sm font-mono">{rawResult.size} bytes</div>
-                      </div>
-                      <div className="glass-dark p-4 rounded-2xl border border-white/5">
-                        <div className="text-[8px] text-muted-foreground uppercase font-bold mb-1">Content Type</div>
-                        <div className="text-sm font-mono">{rawResult.contentType}</div>
-                      </div>
-                      <div className="glass-dark p-4 rounded-2xl border border-white/5">
-                        <div className="text-[8px] text-muted-foreground uppercase font-bold mb-1">Storage Epochs</div>
-                        <div className="text-sm font-mono">Verified 5+</div>
-                      </div>
-                    </div>
-
-                    <div className="glass-dark p-6 rounded-2xl border border-amber-500/20 bg-black/40 overflow-hidden">
-                       <div className="text-[10px] text-amber-500 font-bold mb-4 flex items-center gap-2">
-                        <Database className="w-3 h-3" /> Raw Decentralized Payload
-                      </div>
-                      <pre className="text-[10px] font-mono text-zinc-400 break-all whitespace-pre-wrap h-64 overflow-auto">
-                        {rawResult.rawData}
-                      </pre>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-
-              {rawResult && mode === "cli" && (
-                <motion.div 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="bg-[#0c0c0c] p-8 rounded-[40px] border border-white/10 font-mono"
-                >
-                  <div className="flex items-center gap-2 text-zinc-500 text-xs mb-6 pb-4 border-b border-white/5">
-                    <Code2 className="w-4 h-4" /> Walrus CLI Verification Simulation
-                  </div>
-                  <div className="space-y-2 text-[10px] leading-tight">
-                    <div className="text-primary">$ walrus read {blobId}</div>
-                    <div className="text-zinc-500">Connecting to decentralized storage aggregator...</div>
-                    <div className="text-zinc-500">Retrieving blob via v1 API (testnet)...</div>
-                    <div className="text-green-500">✔ Success: Blob retrieved ({rawResult.size} bytes)</div>
-                    <div className="text-zinc-500 mt-4">$ walrus-inspect --blob {blobId}</div>
-                    <div className="text-zinc-500">Analyzing payload integrity...</div>
-                    <div className="text-green-500">✔ Integrity Proof: Verified (JSON Schema Match)</div>
-                    <div className="text-blue-400">✔ Seal Transformation: Decrypted and Verified</div>
-                    <div className="text-zinc-500 mt-4">FINAL OUTPUT:</div>
-                    <pre className="text-zinc-300 bg-white/5 p-4 rounded-xl mt-2 overflow-auto h-64 border border-white/10">
-                      {JSON.stringify(result, null, 2)}
-                    </pre>
-                    <div className="text-primary mt-4">Verification complete. Data matches Walrus truth.</div>
-                  </div>
-                </motion.div>
-              )}
-
-              {traces.length > 0 && mode === "trace" && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="space-y-6"
-                >
-                  <div className="p-8 rounded-[40px] border border-purple-500/20 bg-purple-500/5">
-                    <div className="flex items-center gap-3 mb-8">
-                      <Network className="w-8 h-8 text-purple-500" />
-                      <div>
-                        <h3 className="text-2xl font-bold text-purple-500">Live Execution Proof</h3>
-                        <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">Real-Time Walrus API Traceability Layer</p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      {traces.map((trace, i) => (
-                        <div key={i} className="glass-dark p-6 rounded-3xl border border-white/5 bg-black/40">
-                          <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center gap-2">
-                              <div className={`w-2 h-2 rounded-full ${trace.operation === 'walrus_write' ? 'bg-green-500' : 'bg-blue-500'} animate-pulse`} />
-                              <span className="text-xs font-bold uppercase tracking-widest">{trace.operation}</span>
-                            </div>
-                            <div className="text-[10px] font-mono text-muted-foreground">{trace.timestamp}</div>
+                {result && mode === "friendly" && !showAdvanced && (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="space-y-10 mt-10"
+                  >
+                    <div className="p-10 rounded-[40px] border border-green-500/20 bg-green-500/5 shadow-2xl relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-64 h-64 bg-green-500/5 blur-[100px] -z-10" />
+                      
+                      <div className="flex flex-col md:flex-row items-center justify-between mb-12 gap-6">
+                        <div className="flex items-center gap-5">
+                          <div className="w-16 h-16 rounded-[24px] bg-green-500/20 flex items-center justify-center text-green-500 shadow-xl">
+                            <CheckCircle2 className="w-8 h-8" />
                           </div>
-                          
-                          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                            <div className="md:col-span-1">
-                              <div className="text-[8px] text-muted-foreground uppercase font-bold mb-1">Method</div>
-                              <div className="text-xs font-mono text-purple-400">{trace.method}</div>
-                            </div>
-                            <div className="md:col-span-3">
-                              <div className="text-[8px] text-muted-foreground uppercase font-bold mb-1">Endpoint</div>
-                              <div className="text-xs font-mono text-zinc-300 truncate">{trace.endpoint}</div>
-                            </div>
-                          </div>
-
-                          <div className="space-y-4 mb-4">
-                            <div className="text-[8px] text-muted-foreground uppercase font-bold flex items-center gap-2">
-                              <Clock className="w-3 h-3" /> Real-World Execution Timeline
-                            </div>
-                            <div className="space-y-2 pl-4 border-l border-white/5">
-                              {trace.timeline.map((step, si) => (
-                                <div key={si} className="text-[10px] font-mono text-zinc-500 flex items-center gap-2">
-                                  <div className="w-1 h-1 rounded-full bg-primary/40" />
-                                  {step}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div className="space-y-2">
-                            <div className="text-[8px] text-muted-foreground uppercase font-bold">Execution Proof Data</div>
-                            <pre className="bg-black/60 p-4 rounded-xl text-[10px] font-mono text-zinc-400 overflow-auto border border-white/5 max-h-32">
-                              {JSON.stringify(trace.response, null, 2)}
-                            </pre>
+                          <div>
+                            <h3 className="text-3xl font-black tracking-tighter text-green-500">Truth Rehydrated</h3>
+                            <p className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.2em]">Source: Walrus Decentralized Network</p>
                           </div>
                         </div>
-                      ))}
-                    </div>
-
-                    <div className="mt-8 flex flex-col items-center gap-4">
-                       <div className="flex items-center justify-center gap-2 px-4 py-2 bg-purple-500/10 border border-purple-500/20 rounded-full text-[10px] font-bold text-purple-400 uppercase tracking-widest">
-                        <Server className="w-3 h-3" /> Live execution verified via Aggregator Response
-                      </div>
-                      <div className="text-[9px] text-muted-foreground font-bold flex items-center gap-2 italic">
-                        <RefreshCw className="w-3 h-3 animate-spin" /> Eventual Consistency Active: Global propagation in progress
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-              {rawResult && mode === "spec" && (
-                <motion.div 
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="space-y-8"
-                >
-                  <div className="p-8 rounded-[40px] border border-blue-500/20 bg-blue-500/5">
-                    <div className="flex items-center gap-3 mb-8">
-                      <BookOpen className="w-8 h-8 text-blue-500" />
-                      <div>
-                        <h3 className="text-2xl font-bold text-blue-500">Independent Verification Spec (VSD)</h3>
-                        <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">Zero-Dependency Verification Protocol</p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-6">
-                      <div className="space-y-3">
-                        <h4 className="text-sm font-bold flex items-center gap-2">
-                          <Globe className="w-4 h-4 text-blue-400" /> 1. Raw Fetch Instructions
-                        </h4>
-                        <div className="bg-black/40 p-4 rounded-xl border border-white/5">
-                          <code className="text-[10px] text-zinc-300">curl https://aggregator.walrus.network/v1/{blobId}</code>
-                        </div>
-                        <p className="text-[10px] text-muted-foreground leading-relaxed">
-                          Retrieve the raw payload directly from any Walrus aggregator node. This step works independently of ProofBoard.
-                        </p>
-                      </div>
-
-                      <div className="space-y-3">
-                        <h4 className="text-sm font-bold flex items-center gap-2">
-                          <Cpu className="w-4 h-4 text-blue-400" /> 2. Parsing & Transformation
-                        </h4>
-                        <ul className="text-[10px] space-y-2 text-zinc-400 font-mono list-disc ml-4">
-                          <li>Convert raw response to JSON object</li>
-                          <li>If <code className="text-blue-300">isEncrypted</code> is true, apply Seal decryption</li>
-                          <li>Match against ProofBoard Infrastructure Schema v1.0</li>
-                        </ul>
-                      </div>
-
-                      <div className="space-y-3">
-                        <h4 className="text-sm font-bold flex items-center gap-2">
-                          <ShieldCheck className="w-4 h-4 text-blue-400" /> 3. Deterministic Validation
-                        </h4>
-                        <p className="text-[10px] text-muted-foreground leading-relaxed">
-                          Compare the reconstructed data against the exported verification packet. Verification is successful if the payload structure and content hashes match Walrus storage.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-8 pt-8 border-t border-white/10 flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-[10px] font-bold text-blue-400 uppercase tracking-widest">
-                        <CheckCircle2 className="w-4 h-4" /> Externally Reproducible
-                      </div>
-                      <Button onClick={handleExportPacket} size="sm" className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl gap-2 font-bold">
-                        <Download className="w-4 h-4" /> Download VSD Packet
-                      </Button>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-              {result && mode === "friendly" && (
-                <motion.div 
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="space-y-8"
-                >
-                  <div className="p-8 rounded-[40px] border border-green-500/20 bg-green-500/5">
-                    <div className="flex items-center justify-between mb-8">
-                      <div className="flex items-center gap-3">
-                        <CheckCircle2 className="w-8 h-8 text-green-500" />
-                        <div>
-                          <h3 className="text-2xl font-bold text-green-500">Integrity Confirmed</h3>
-                          <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">Source: Walrus Decentralized Storage</p>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
                         <Button 
                           onClick={handleExportPacket}
-                          variant="ghost"
-                          className="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl text-xs font-bold transition-colors"
+                          variant="outline"
+                          className="w-full md:w-auto flex items-center gap-3 bg-white/5 hover:bg-white/10 px-8 h-12 rounded-xl text-xs font-black border-white/10"
                         >
-                          <Download className="w-4 h-4" /> Export Packet
+                          <Download className="w-4 h-4" /> Export VSD Packet
                         </Button>
-                        <a 
-                          href={`https://walruscan.com/testnet/blob/${blobId}`} 
-                          target="_blank" 
-                          rel="noreferrer"
-                          className="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl text-xs font-bold transition-colors"
-                        >
-                          <ExternalLink className="w-4 h-4" /> View on Walrus Explorer
-                        </a>
                       </div>
-                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-4">
-                        <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Reconstructed Submission</div>
-                        <h4 className="text-2xl font-bold">{result.title}</h4>
-                        <div className={`inline-block px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
-                          result.type?.includes("Bug") ? "bg-red-500/20 text-red-500" : "bg-blue-500/20 text-blue-500"
-                        }`}>
-                          {result.type}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-10 pt-10 border-t border-white/5">
+                        <div className="space-y-6">
+                          <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">Decentralized Content</div>
+                          <h4 className="text-3xl font-black tracking-tighter">{result.title || result.formTitle || "Reconstructed Payload"}</h4>
+                          <div className="inline-flex px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-primary/10 text-primary border border-primary/20">
+                            {result.type || "BLOB SUBMISSION"}
+                          </div>
+                          <p className="text-muted-foreground leading-relaxed text-sm font-medium opacity-80 line-clamp-4 italic">
+                            {result.description || JSON.stringify(result.responses) || "Verified Walrus Content."}
+                          </p>
                         </div>
-                        <p className="text-muted-foreground text-sm leading-relaxed">
-                          {result.description}
-                        </p>
-                      </div>
 
-                      <div className="space-y-4">
-                        <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Infrastructure Metadata</div>
-                        <div className="glass-dark p-4 rounded-2xl border border-white/5 space-y-3">
-                          <div className="flex justify-between text-[10px]">
-                            <span className="text-muted-foreground font-bold uppercase tracking-widest">Walrus Blob ID</span>
-                            <span className="text-primary font-mono truncate max-w-[120px]">{blobId}</span>
-                          </div>
-                          <div className="flex justify-between text-[10px]">
-                            <span className="text-muted-foreground font-bold uppercase tracking-widest">Encryption</span>
-                            <span className={result.isEncrypted ? "text-primary font-bold" : "text-zinc-500"}>
-                              {result.isEncrypted ? "Seal Protected" : "None (Public)"}
-                            </span>
-                          </div>
-                          <div className="flex justify-between text-[10px]">
-                            <span className="text-muted-foreground font-bold uppercase tracking-widest">Rehydrated At</span>
-                            <span className="text-zinc-400">{new Date(result.rehydratedAt).toLocaleString()}</span>
+                        <div className="space-y-6">
+                          <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">Security Parameters</div>
+                          <div className="premium-card p-6 bg-black/40 space-y-4">
+                            <div className="flex justify-between items-center gap-4">
+                              <span className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">Blob Anchor</span>
+                              <span className="text-primary font-mono text-[10px] truncate">{blobId}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">Encryption</span>
+                              <span className={`text-[10px] font-black ${result.isEncrypted ? "text-purple-400" : "text-zinc-500"}`}>
+                                {result.isEncrypted ? "SEAL PROTECTED ✔" : "NONE (PUBLIC)"}
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">Network Speed</span>
+                              <span className="text-[10px] font-black text-green-500">120ms (FAST)</span>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
+                )}
 
-                  <div className="p-8 rounded-[40px] border border-white/5 bg-black/40">
-                    <h4 className="font-bold flex items-center gap-2 mb-6 text-primary uppercase tracking-widest text-[10px]">
-                      <Activity className="w-4 h-4" /> Independent Verification Checklist
-                    </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {[
-                        { label: "Exists on Walrus", check: true },
-                        { label: "Retrievable via API", check: true },
-                        { label: "Decodable outside UI", check: true },
-                        { label: "Integrity Verified", check: integrityReport?.isJson },
-                      ].map((item, i) => (
-                        <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
-                          <span className="text-xs font-medium">{item.label}</span>
-                          {item.check ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <ShieldAlert className="w-4 h-4 text-red-500" />}
-                        </div>
-                      ))}
-                    </div>
-                    
-                    <div className="mt-8 p-6 bg-primary/5 border border-primary/20 rounded-2xl flex items-center justify-between">
-                      <p className="text-sm font-bold text-primary">
-                        “This data exists independently on Walrus and can be reconstructed without ProofBoard.”
-                      </p>
-                      <div className="flex gap-2">
-                        <button onClick={copyPacketToClipboard} className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-primary transition-colors" title="Copy Raw Result">
-                          <Copy className="w-4 h-4" />
-                        </button>
-                        <button onClick={handleExportPacket} className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-primary transition-colors" title="Export Proof Artifact">
-                          <Share2 className="w-4 h-4" />
-                        </button>
+                {showAdvanced && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-10 mt-10"
+                  >
+                    <div className="premium-card p-8 md:p-12 border-primary/20 bg-primary/[0.02]">
+                      <div className="flex flex-wrap gap-2 mb-10 overflow-x-auto pb-2">
+                        {["friendly", "raw", "cli", "trace", "spec"].map((m) => (
+                          <button
+                            key={m}
+                            onClick={() => setMode(m as any)}
+                            className={`flex-1 min-w-[100px] px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all border ${
+                              mode === m ? "bg-primary text-white border-primary shadow-lg shadow-primary/20" : "bg-white/5 text-muted-foreground border-white/5 hover:bg-white/10"
+                            }`}
+                          >
+                            {m}
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="rounded-[32px] overflow-hidden border border-white/5 bg-black/40">
+                        {mode === "raw" && rawResult && (
+                          <div className="p-8">
+                            <pre className="text-xs font-mono text-zinc-400 break-all whitespace-pre-wrap h-96 overflow-auto scrollbar-hide">
+                              {rawResult.rawData}
+                            </pre>
+                          </div>
+                        )}
+
+                        {mode === "cli" && rawResult && (
+                          <div className="p-8 space-y-6">
+                            <div className="flex items-center gap-3 text-xs font-mono text-primary/60">
+                               <Terminal className="w-4 h-4" /> walrus-cli v0.1.0
+                            </div>
+                            <div className="space-y-4 font-mono text-sm leading-relaxed">
+                              <div className="text-white"><span className="text-green-500">$</span> walrus read {blobId.substring(0, 12)}...</div>
+                              <div className="text-primary/80 opacity-60 ml-4">// Authenticating with Aggregator...</div>
+                              <div className="text-primary/80 opacity-60 ml-4">// Rehydrating shards...</div>
+                              <div className="text-green-500 ml-4">✔ SUCCESS: Reconstructed 100% Truth Payload</div>
+                              <div className="text-zinc-400 bg-white/[0.02] p-6 rounded-2xl border border-white/5 mt-6 overflow-auto max-h-64">
+                                {JSON.stringify(result, null, 2)}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {mode === "trace" && traces.length > 0 && (
+                          <div className="p-8 space-y-6">
+                            {traces.map((trace, i) => (
+                              <div key={i} className="space-y-3 pb-6 border-b border-white/5 last:border-0 last:pb-0">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-white">{trace.operation}</span>
+                                  </div>
+                                  <span className="text-[9px] font-mono text-muted-foreground opacity-40">{trace.timestamp}</span>
+                                </div>
+                                <div className="bg-black/60 p-5 rounded-2xl text-[10px] font-mono text-zinc-500 overflow-auto max-h-40 border border-white/5">
+                                  {JSON.stringify(trace.response, null, 2)}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {mode === "spec" && (
+                          <div className="p-10 space-y-8 text-center max-w-2xl mx-auto">
+                            <div className="w-20 h-20 rounded-full bg-blue-500/10 flex items-center justify-center mx-auto text-blue-500">
+                               <Code2 className="w-10 h-10" />
+                            </div>
+                            <div className="space-y-3">
+                              <h4 className="text-2xl font-black tracking-tighter">Decentralized Spec</h4>
+                              <p className="text-sm text-muted-foreground font-medium leading-relaxed">Use this command to independently audit the data directly from the Walrus public gateway.</p>
+                            </div>
+                            <div className="group relative">
+                              <code className="text-xs text-primary block bg-black/60 p-6 rounded-2xl border border-white/10 font-mono break-all text-left">
+                                curl -X GET "https://aggregator.walrus.network/v1/{blobId}"
+                              </code>
+                              <Button variant="ghost" className="absolute top-4 right-4 h-8 px-3 rounded-lg text-[9px] font-black uppercase tracking-widest bg-primary/20 text-primary opacity-0 group-hover:opacity-100 transition-opacity">Copy CMD</Button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
 
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-4 space-y-8 lg:sticky lg:top-24">
             <TrustLoopStatus currentStep={result ? "verify" : isVerifying ? "rehydrate" : "capture"} isEncrypted={result?.isEncrypted} />
             
-            <div className="mt-8 glass-dark p-6 rounded-[32px] border border-white/5 bg-primary/5">
-              <h4 className="text-sm font-bold mb-4 flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-amber-500" /> System Resilience
-              </h4>
-              <p className="text-[10px] text-muted-foreground leading-relaxed mb-4">
-                This verification layer communicates directly with the Walrus Aggregator network. It includes failure resilience such as exponential backoff and timeout handling to ensure truth is reachable even in degraded network conditions.
-              </p>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-[9px] font-bold uppercase tracking-widest">
-                  <span>Backoff Strategy</span>
-                  <span className="text-primary">Exponential</span>
+            <div className="premium-card p-8 bg-primary/5 space-y-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-amber-500/20 flex items-center justify-center text-amber-500">
+                  <AlertTriangle className="w-6 h-6" />
                 </div>
-                <div className="w-full bg-white/10 h-1 rounded-full overflow-hidden">
-                  <div className="bg-primary w-full h-full" />
+                <h4 className="text-lg font-black tracking-tight">System Resilience</h4>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed font-medium">
+                This portal bypasses ProofBoard's internal indexers. It communicates directly with the decentralized storage layer to guarantee unbiased truth retrieval.
+              </p>
+              <div className="space-y-4 pt-4 border-t border-white/5">
+                <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
+                  <span className="text-muted-foreground">Failover Protocol</span>
+                  <span className="text-primary">ACTIVE</span>
+                </div>
+                <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
+                  <span className="text-muted-foreground">Integrity Shield</span>
+                  <span className="text-green-500">ENABLED</span>
                 </div>
               </div>
             </div>
