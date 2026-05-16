@@ -240,7 +240,7 @@ export default function AdminDashboardPage() {
                       </TableCell>
                       <TableCell className="py-8 pr-10 text-right">
                         <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
+                          <DropdownMenuTrigger>
                             <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-white/10 transition-all">
                               <MoreVertical className="w-5 h-5" />
                             </Button>

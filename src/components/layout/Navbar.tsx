@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Wallet, Menu, X, ShieldCheck, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+
 import { usePathname } from "next/navigation";
 
 export const Navbar = () => {
@@ -25,7 +26,7 @@ export const Navbar = () => {
       localStorage.removeItem("proofboard_connected");
       return;
     }
-    
+
     setIsConnecting(true);
     setTimeout(() => {
       setIsConnected(true);
@@ -35,11 +36,11 @@ export const Navbar = () => {
     }, 1200);
   };
 
-  const navItems = [
-    { href: "/demo", label: "Explorer" },
-    { href: "/builder", label: "Provision" },
-    { href: "/admin", label: "Console" },
-    { href: "/verify", label: "Audit" },
+  const links = [
+    { href: "/demo", label: "Demo Mode" },
+    { href: "/builder", label: "Form Builder" },
+    { href: "/admin", label: "Dashboard" },
+    { href: "/verify", label: "Verification" },
   ];
 
   return (
@@ -54,26 +55,25 @@ export const Navbar = () => {
           </span>
         </Link>
 
+        {/* Desktop Nav */}
         <div className="hidden md:flex items-center gap-8">
-          {navItems.map((item) => (
+          {links.map((link) => (
             <Link
-              key={item.href}
-              href={item.href}
-              className={`text-[10px] font-bold uppercase tracking-widest transition-all hover:text-primary ${
-                pathname === item.href ? "text-primary" : "text-muted-foreground"
-              }`}
+              key={link.href}
+              href={link.href}
+              className={`text-[10px] font-bold uppercase tracking-widest transition-all hover:text-primary ${pathname === link.href ? "text-primary" : "text-muted-foreground"
+                }`}
             >
-              {item.label}
+              {link.label}
             </Link>
           ))}
-          <Button 
+          <Button
             onClick={handleConnect}
             disabled={isConnecting}
-            className={`rounded-full px-6 font-bold transition-all ${
-              isConnected 
-                ? "bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20" 
+            className={`rounded-full px-6 font-bold transition-all ${isConnected
+                ? "bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20"
                 : "bg-white text-black hover:bg-white/90"
-            }`}
+              }`}
           >
             {isConnecting ? (
               <RefreshCw className="w-4 h-4 animate-spin mr-2" />
@@ -84,6 +84,7 @@ export const Navbar = () => {
           </Button>
         </div>
 
+        {/* Mobile Toggle */}
         <button
           className="md:hidden text-muted-foreground hover:text-primary p-2"
           onClick={() => setIsOpen(!isOpen)}
@@ -92,6 +93,7 @@ export const Navbar = () => {
         </button>
       </div>
 
+      {/* Mobile Nav */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -101,24 +103,22 @@ export const Navbar = () => {
             className="md:hidden border-b border-white/5 bg-background/95 backdrop-blur-xl overflow-hidden"
           >
             <div className="flex flex-col p-6 gap-6">
-              {navItems.map((item) => (
+              {links.map((link) => (
                 <Link
-                  key={item.href}
-                  href={item.href}
+                  key={link.href}
+                  href={link.href}
                   onClick={() => setIsOpen(false)}
-                  className={`text-lg font-bold uppercase tracking-widest ${
-                    pathname === item.href ? "text-primary" : "text-muted-foreground"
-                  }`}
+                  className={`text-lg font-bold uppercase tracking-widest ${pathname === link.href ? "text-primary" : "text-muted-foreground"
+                    }`}
                 >
-                  {item.label}
+                  {link.label}
                 </Link>
               ))}
-              <Button 
+              <Button
                 onClick={handleConnect}
                 disabled={isConnecting}
-                className={`w-full h-14 rounded-2xl font-bold ${
-                  isConnected ? "bg-primary/10 text-primary" : "bg-white text-black"
-                }`}
+                className={`w-full h-14 rounded-2xl font-bold ${isConnected ? "bg-primary/10 text-primary" : "bg-white text-black"
+                  }`}
               >
                 {isConnecting ? "Connecting..." : isConnected ? "0x71c...82a" : "Connect Wallet"}
               </Button>
