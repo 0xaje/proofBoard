@@ -41,11 +41,25 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { useSearchParams } from "next/navigation";
 import { WalrusPublisherClient, getExecutionTraces, ProtocolExecutionTrace } from "@/lib/walrus";
 import { TrustLoopStatus } from "@/components/TrustLoopStatus";
 
 export default function VerificationPage() {
-  const [blobId, setBlobId] = React.useState("");
+  return (
+    <React.Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <RefreshCw className="w-12 h-12 text-primary animate-spin" />
+      </div>
+    }>
+      <VerificationPortal />
+    </React.Suspense>
+  );
+}
+
+function VerificationPortal() {
+  const searchParams = useSearchParams();
+  const [blobId, setBlobId] = React.useState(searchParams.get("blobId") || "");
   const [isVerifying, setIsVerifying] = React.useState(false);
   const [result, setResult] = React.useState<any>(null);
   const [rawResult, setRawResult] = React.useState<any>(null);
@@ -65,6 +79,12 @@ export default function VerificationPage() {
       setNetworkStatus(states[Math.floor(Math.random() * states.length)]);
     }, 10000);
     return () => clearInterval(interval);
+  }, []);
+
+  React.useEffect(() => {
+    if (searchParams.get("blobId")) {
+      handleVerify();
+    }
   }, []);
 
   const handleVerify = async (e?: React.FormEvent, forceCorrupt = false) => {
