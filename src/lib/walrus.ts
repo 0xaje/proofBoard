@@ -58,10 +58,40 @@ export async function uploadToWalrus(
     blob = new Blob([JSON.stringify(fileOrData)], { type: 'application/json' });
   }
 
+  addTrace("REST_API_UPLOAD_INIT", { filename, contentType });
+
+  // 1. Try direct browser-to-node PUT upload first (supports large images/videos, bypasses Vercel 4.5MB limit)
+  try {
+    const publisher = "https://publisher.walrus-testnet.walrus.space";
+    const uploadUrl = `${publisher}/v1/blobs?epochs=5`;
+    
+    const response = await fetch(uploadUrl, {
+      method: 'PUT',
+      body: blob,
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const blobInfo = data.newlyCreated?.blobObject || data.alreadyCertified || data;
+      const blobId = blobInfo.blobId || blobInfo.blob_id;
+
+      if (blobId) {
+        const result = {
+          blobId,
+          url: `https://aggregator.walrus-testnet.walrus.space/v1/${blobId}`,
+          alreadyCertified: !!data.alreadyCertified
+        };
+        addTrace("REST_API_DIRECT_UPLOAD_SUCCESS", result);
+        return result;
+      }
+    }
+  } catch (err) {
+    console.warn("Direct upload failed, falling back to server route...", err);
+  }
+
+  // 2. Fallback to Server Proxy Route
   const formData = new FormData();
   formData.append('file', blob, filename);
-
-  addTrace("REST_API_UPLOAD_INIT", { filename, contentType });
 
   const response = await fetch('/api/walrus/upload', {
     method: 'POST',
@@ -69,7 +99,7 @@ export async function uploadToWalrus(
   });
 
   if (!response.ok) {
-    const error = await response.json();
+    const error = await response.json().catch(() => ({ message: "Server route failed" }));
     addTrace("REST_API_UPLOAD_FAIL", error);
     throw new WalrusUploadError(error.message || `Upload failed: ${response.statusText}`);
   }
