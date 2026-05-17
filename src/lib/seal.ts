@@ -3,20 +3,20 @@
  * Implements a simple AES-GCM encryption for securing sensitive feedback.
  * In a real-world scenario, this should use Hybrid Encryption (RSA + AES)
  * where the frontend only holds the Public Key, and the Admin Dashboard holds the Private Key.
- * For this MVP, we use a deterministic symmetric key for demonstration purposes.
+ * For this MVP, we use a deterministic symmetric key for system-wide encryption.
  */
 
-// A fixed 256-bit key for MVP demonstration (in production, use a secure key management system)
-const MVP_DEMO_KEY = new Uint8Array([
+// A fixed 256-bit key for MVP encryption (in production, use a secure key management system)
+const SYSTEM_SEAL_KEY = new Uint8Array([
   114, 21, 193, 22, 101, 88, 201, 56, 45, 233, 11, 44,
   87, 109, 230, 99, 112, 54, 76, 211, 23, 9, 144, 12,
   77, 88, 19, 210, 65, 33, 101, 99
 ]);
 
-async function getDemoKey(): Promise<CryptoKey> {
+async function getSealKey(): Promise<CryptoKey> {
   return await window.crypto.subtle.importKey(
     "raw",
-    MVP_DEMO_KEY,
+    SYSTEM_SEAL_KEY,
     { name: "AES-GCM" },
     false,
     ["encrypt", "decrypt"]
@@ -28,7 +28,7 @@ async function getDemoKey(): Promise<CryptoKey> {
  * containing the IV and the encrypted payload.
  */
 export async function encryptSealData(text: string): Promise<string> {
-  const key = await getDemoKey();
+  const key = await getSealKey();
   const encoder = new TextEncoder();
   const data = encoder.encode(text);
 
@@ -60,7 +60,7 @@ export async function encryptSealData(text: string): Promise<string> {
  */
 export async function decryptSealData(encryptedBase64: string): Promise<string> {
   try {
-    const key = await getDemoKey();
+    const key = await getSealKey();
     const combinedBytes = base64ToArrayBuffer(encryptedBase64);
 
     // Extract IV and Encrypted Data

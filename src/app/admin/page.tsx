@@ -104,8 +104,8 @@ export default function AdminDashboardPage() {
       <div className="max-w-7xl mx-auto space-y-12">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
           <div className="space-y-2">
-            <h1 className="text-4xl md:text-5xl font-black tracking-tighter">Responses Dashboard</h1>
-            <p className="text-muted-foreground text-lg">Monitor and manage decentralized form submissions.</p>
+            <h1 className="text-4xl md:text-5xl font-black tracking-tighter">Feedback Workflow</h1>
+            <p className="text-muted-foreground text-lg">Manage decentralized communications and resolve ecosystem feedback.</p>
           </div>
           <div className="flex flex-wrap gap-3">
             <Button 
@@ -172,7 +172,7 @@ export default function AdminDashboardPage() {
               />
             </div>
             <div className="flex flex-wrap gap-2 w-full md:w-auto">
-              {["all", "pending", "reviewing", "resolved"].map(status => (
+              {["all", "pending", "reviewing", "planned", "resolved"].map(status => (
                 <button
                   key={status}
                   onClick={() => setSelectedStatus(status)}
@@ -233,6 +233,7 @@ export default function AdminDashboardPage() {
                         <Badge variant="outline" className={`rounded-xl px-4 py-1 uppercase text-[9px] font-black tracking-widest border-none ${
                           sub.status === "pending" ? "bg-amber-500/10 text-amber-500" :
                           sub.status === "reviewing" ? "bg-blue-500/10 text-blue-500" :
+                          sub.status === "planned" ? "bg-purple-500/10 text-purple-500" :
                           "bg-green-500/10 text-green-500"
                         }`}>
                           {sub.status}
@@ -255,9 +256,10 @@ export default function AdminDashboardPage() {
                               <span className="text-xs font-bold">Audit Blob ID</span>
                             </DropdownMenuItem>
                             <div className="h-px bg-white/5 my-2 mx-1" />
-                            <div className="px-3 py-2 text-[8px] font-black uppercase text-muted-foreground tracking-widest">Update Lifecycle</div>
-                            <DropdownMenuItem onClick={() => updateStatus(sub.blobId, "reviewing")} className="rounded-xl p-3 cursor-pointer hover:bg-white/5 text-xs font-medium">Mark as Reviewing</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => updateStatus(sub.blobId, "resolved")} className="rounded-xl p-3 cursor-pointer hover:bg-green-500/10 text-green-500 text-xs font-bold">Mark as Resolved</DropdownMenuItem>
+                            <div className="px-3 py-2 text-[8px] font-black uppercase text-muted-foreground tracking-widest">Workflow Actions</div>
+                            <DropdownMenuItem onClick={() => window.location.href = `/admin/submission/${sub.blobId}`} className="rounded-xl p-3 cursor-pointer hover:bg-white/5 text-xs font-bold text-white">
+                              Open Thread / Resolve
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>

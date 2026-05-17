@@ -42,49 +42,6 @@ import {
   Legend
 } from 'recharts';
 
-const INITIAL_FEEDBACK = [
-  { 
-    id: 1, 
-    title: "UI Artifacts on mobile", 
-    type: "Bug", 
-    sentiment: "Negative", 
-    severity: "High", 
-    author: "0x71...82a", 
-    date: "2h ago",
-    content: "Encrypted Submission",
-    isEncrypted: true,
-    walrusBlobId: "vB6...9k2",
-    encryptionType: "Seal",
-    encryptionPreview: {
-      rawHash: "sha256:8f2...1e3",
-      encryptedHash: "seal:9k2...vB6"
-    },
-    encryptedData: "cMqq/xNAVSn3PGWEgfqCpyNvivkfHOIXxXbmgd+2sg7lpNV+jD9xvQeVLmYB1VIXKmMTKGVH1hD6dTg+tkD1ZBgrzGWBZjby16qZiPZ3wvCCzoPVyagsHBbLSikNQ3TvrQdJK0UAflvrBa8folAYXAdCiCS9zUZI0tTVlac00j0=",
-    aiSummary: "Encrypted submission requires admin decryption."
-  },
-  { 
-    id: 4, 
-    title: "Walrus Integration Error", 
-    type: "Bug", 
-    sentiment: "Negative", 
-    severity: "High", 
-    author: "sui_master.sui", 
-    date: "2d ago",
-    content: "Cannot upload large blobs to the aggregator.",
-    walrusBlobId: "BLOB_ID_DEMO_123", // For rehydration demo
-    aiSummary: "Critical integration issue with Walrus aggregator for large blobs."
-  },
-];
-
-const CHART_DATA = [
-  { name: 'Mon', bugs: 4, features: 2, surveys: 1 },
-  { name: 'Tue', bugs: 3, features: 4, surveys: 2 },
-  { name: 'Wed', bugs: 7, features: 3, surveys: 5 },
-  { name: 'Thu', bugs: 2, features: 8, surveys: 3 },
-  { name: 'Fri', bugs: 1, features: 5, surveys: 4 },
-  { name: 'Sat', bugs: 5, features: 2, surveys: 6 },
-  { name: 'Sun', bugs: 3, features: 6, surveys: 2 },
-];
 
 interface AIInsight {
   summary: string;
@@ -97,13 +54,97 @@ export default function AdminDashboardPage() {
   const { projectId } = useParams();
   const router = useRouter();
   
-  const [submissions, setSubmissions] = React.useState(INITIAL_FEEDBACK);
+  const [submissions, setSubmissions] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    const fetchRealData = async () => {
+      // In a fully decentralized app, this would query a smart contract indexer.
+      // For this MVP, we use localStorage to track our blob IDs and fetch the real data from Walrus.
+      const existing = JSON.parse(localStorage.getItem("proofboard_submissions") || "[]");
+      const projectSubmissions = existing.filter((s: any) => s.formId === projectId);
+      
+      const client = new WalrusPublisherClient({ network: "testnet" });
+      const loaded: any[] = [];
+      
+      for (const s of projectSubmissions) {
+        try {
+          const blobData = await client.readBlob(s.blobId);
+          const parsed = JSON.parse(blobData);
+          
+          let content = "Encrypted Submission";
+          let isEncrypted = parsed.isEncrypted;
+          let title = s.formTitle || "User Feedback";
+          let encryptedData = undefined;
+          
+          if (parsed.isEncrypted) {
+             encryptedData = parsed.responses.__sealed;
+          } else {
+             const textFields = Object.values(parsed.responses).filter(v => typeof v === 'string') as string[];
+             if (textFields.length > 0) title = textFields[0].substring(0, 40) + "...";
+             content = JSON.stringify(parsed.responses, null, 2);
+          }
+          
+          loaded.push({
+            id: s.blobId,
+            title: title,
+            type: "Submission",
+            sentiment: "Pending Analysis",
+            severity: "Unknown",
+            author: "Verified User",
+            date: new Date(s.timestamp).toLocaleDateString(),
+            content: content,
+            isEncrypted: isEncrypted,
+            encryptedData: encryptedData,
+            walrusBlobId: s.blobId,
+            isRehydrated: true,
+          });
+        } catch (e) {
+          console.error("Failed to fetch blob from Walrus", s.blobId);
+        }
+      }
+      setSubmissions(loaded);
+    };
+    fetchRealData();
+  }, [projectId]);
   const [decryptedContent, setDecryptedContent] = React.useState<Record<number, string>>({});
   const [isDecrypting, setIsDecrypting] = React.useState<Record<number, boolean>>({});
   const [aiInsights, setAiInsights] = React.useState<Record<number, AIInsight>>({});
   const [isAnalyzing, setIsAnalyzing] = React.useState<Record<number, boolean>>({});
   const [isRehydrating, setIsRehydrating] = React.useState<Record<number, boolean>>({});
   const [integrityMatch, setIntegrityMatch] = React.useState<Record<number, boolean>>({});
+
+  const stats = React.useMemo(() => {
+    let positiveCount = 0;
+    let highUrgencyCount = 0;
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const chart = days.map(d => ({ name: d, bugs: 0, features: 0, surveys: 0 }));
+
+    submissions.forEach(s => {
+      const insight = aiInsights[s.id] || { sentiment: s.sentiment, category: s.type, urgency: s.severity };
+      if (insight.sentiment === "Positive") positiveCount++;
+      if (insight.urgency === "High" || insight.urgency === "Critical") highUrgencyCount++;
+      
+      try {
+        const date = new Date(s.date);
+        const dayName = days[date.getDay()];
+        const dayEntry = chart.find(d => d.name === dayName);
+        if (dayEntry) {
+          if ((insight.category || "").toLowerCase().includes("bug")) dayEntry.bugs++;
+          else if ((insight.category || "").toLowerCase().includes("feature")) dayEntry.features++;
+          else dayEntry.surveys++;
+        }
+      } catch (e) {}
+    });
+
+    const sentimentPercent = submissions.length > 0 ? Math.round((positiveCount / submissions.length) * 100) : 0;
+    
+    return {
+      total: submissions.length,
+      critical: highUrgencyCount,
+      sentiment: sentimentPercent,
+      chartData: chart
+    };
+  }, [submissions, aiInsights]);
 
   const handleRehydrate = async (id: number, blobId: string) => {
     setIsRehydrating(prev => ({ ...prev, [id]: true }));
@@ -228,7 +269,7 @@ export default function AdminDashboardPage() {
             </div>
             <div className="text-xs font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-lg border border-primary/20">Total</div>
           </div>
-          <div className="text-5xl font-black mb-2 glow-text relative z-10">1,240</div>
+          <div className="text-5xl font-black mb-2 glow-text relative z-10">{stats.total}</div>
           <div className="text-sm font-semibold text-muted-foreground uppercase tracking-widest relative z-10">Feedback Reports</div>
         </motion.div>
         
@@ -245,8 +286,8 @@ export default function AdminDashboardPage() {
             </div>
             <div className="text-xs font-bold text-amber-500 bg-amber-500/10 px-3 py-1.5 rounded-lg border border-amber-500/20">Critical</div>
           </div>
-          <div className="text-5xl font-black mb-2 text-amber-500 relative z-10">12</div>
-          <div className="text-sm font-semibold text-muted-foreground uppercase tracking-widest relative z-10">Open Issues</div>
+          <div className="text-5xl font-black mb-2 text-amber-500 relative z-10">{stats.critical}</div>
+          <div className="text-sm font-semibold text-muted-foreground uppercase tracking-widest relative z-10">Critical Issues</div>
         </motion.div>
         
         <motion.div 
@@ -262,7 +303,7 @@ export default function AdminDashboardPage() {
             </div>
             <div className="text-xs font-bold text-green-500 bg-green-500/10 px-3 py-1.5 rounded-lg border border-green-500/20">Sentiment</div>
           </div>
-          <div className="text-5xl font-black mb-2 text-green-500 relative z-10">84%</div>
+          <div className="text-5xl font-black mb-2 text-green-500 relative z-10">{stats.sentiment}%</div>
           <div className="text-sm font-semibold text-muted-foreground uppercase tracking-widest relative z-10">Positive Feedback</div>
         </motion.div>
       </motion.div>
@@ -280,7 +321,7 @@ export default function AdminDashboardPage() {
           </h3>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={CHART_DATA} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <AreaChart data={stats.chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorBugs" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
@@ -311,7 +352,7 @@ export default function AdminDashboardPage() {
           </h3>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={CHART_DATA} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <BarChart data={stats.chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
                 <XAxis dataKey="name" stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} />
                 <YAxis stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} />

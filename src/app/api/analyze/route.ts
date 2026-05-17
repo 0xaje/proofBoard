@@ -1,31 +1,34 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
-// Instantiate OpenAI client. It expects OPENAI_API_KEY to be set in the environment.
-// For hackathon demo mode, we won't crash if it's missing.
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || 'dummy_key' });
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: CORS_HEADERS });
+}
 
 export async function POST(req: Request) {
   try {
+    if (!process.env.OPENAI_API_KEY) {
+      return NextResponse.json(
+        { error: "Server misconfiguration: OPENAI_API_KEY is not set." },
+        { status: 500, headers: CORS_HEADERS }
+      );
+    }
+
     const { title, description } = await req.json();
 
     if (!title && !description) {
       return NextResponse.json(
         { error: "Title or description is required for analysis." },
-        { status: 400 }
+        { status: 400, headers: CORS_HEADERS }
       );
-    }
-
-    // In demo mode without a real key, we fallback
-    if (!process.env.OPENAI_API_KEY) {
-      // Small artificial delay
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      return NextResponse.json({
-        summary: `Heuristic Analysis: The user mentioned "${title || 'an issue'}". This seems like a priority item for the team to investigate.`,
-        sentiment: title.toLowerCase().includes("error") || title.toLowerCase().includes("bug") ? "Negative" : "Positive",
-        category: title.toLowerCase().includes("error") ? "UI Bug" : "Feature Request",
-        urgency: title.toLowerCase().includes("error") ? "High" : "Medium"
-      });
     }
 
     const systemPrompt = `
@@ -64,15 +67,12 @@ export async function POST(req: Request) {
 
     const resultJSON = JSON.parse(resultText);
 
-    return NextResponse.json(resultJSON);
+    return NextResponse.json(resultJSON, { headers: CORS_HEADERS });
   } catch (error: any) {
     console.error("AI Analysis Error:", error);
-    // Demo mode fallback on error
-    return NextResponse.json({
-      summary: "Backup Insight Pipeline: An error occurred during live analysis. This is a heuristic insight response to ensure the platform remains responsive.",
-      sentiment: "Neutral",
-      category: "Other",
-      urgency: "Medium"
-    });
+    return NextResponse.json(
+      { error: "Failed to generate AI analysis", details: error.message },
+      { status: 500, headers: CORS_HEADERS }
+    );
   }
 }

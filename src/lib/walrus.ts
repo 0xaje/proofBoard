@@ -1,15 +1,8 @@
 import { useState } from 'react';
 
-const PUBLISHERS = [
-  'https://publisher.walrus-testnet.walrus.space',
-  'https://testnet.walrus-publisher.sm.xyz',
-  'https://publisher.walrus.network'
-];
-
 const AGGREGATORS = [
   'https://aggregator.walrus-testnet.walrus.space',
-  'https://testnet.walrus-aggregator.sm.xyz',
-  'https://aggregator.walrus.network'
+  'https://aggregator.testnet.walrus.space'
 ];
 
 export type WalrusUploadResult = {
@@ -18,95 +11,91 @@ export type WalrusUploadResult = {
   alreadyCertified?: boolean;
 };
 
+export type ProtocolExecutionTrace = {
+  operation: string;
+  timestamp: string;
+  response: any;
+};
+
+let auditTraces: ProtocolExecutionTrace[] = [];
+
+export function getExecutionTraces() {
+  return auditTraces;
+}
+
+function addTrace(operation: string, response: any) {
+  auditTraces.push({
+    operation,
+    timestamp: new Date().toISOString(),
+    response
+  });
+  if (auditTraces.length > 10) auditTraces.shift();
+}
+
 export class WalrusUploadError extends Error {
   constructor(message: string) { super(message); this.name = 'WalrusUploadError'; }
 }
 
 /**
- * Hyper-reliable upload strategy. 
- * Sequentially attempts to anchor data across multiple decentralized nodes.
+ * Production-grade upload strategy via Server API.
+ * The frontend communicates solely with our backend proxy to handle Walrus interactions.
  */
 export async function uploadToWalrus(
   fileOrData: File | Blob | Record<string, unknown>
 ): Promise<WalrusUploadResult> {
-  let file: Blob;
-  if (!(fileOrData instanceof Blob) && !(fileOrData instanceof File)) {
-    file = new Blob([JSON.stringify(fileOrData)], { type: 'application/json' });
+  let blob: Blob;
+  let filename = "data.json";
+  let contentType = "application/json";
+
+  if (fileOrData instanceof File) {
+    blob = fileOrData;
+    filename = fileOrData.name;
+    contentType = fileOrData.type;
+  } else if (fileOrData instanceof Blob) {
+    blob = fileOrData;
+    contentType = fileOrData.type;
   } else {
-    file = fileOrData;
+    blob = new Blob([JSON.stringify(fileOrData)], { type: 'application/json' });
   }
 
-  // Pre-configured list of endpoints including any user-provided ones
-  const envEndpoint = process.env.NEXT_PUBLIC_WALRUS_ENDPOINT;
-  const targetEndpoints = envEndpoint ? [envEndpoint, ...PUBLISHERS] : PUBLISHERS;
-  
-  let lastError: any;
+  const formData = new FormData();
+  formData.append('file', blob, filename);
 
-  for (const endpoint of targetEndpoints) {
-    try {
-      // Standard Walrus Store API
-      const storeUrl = `${endpoint.replace(/\/$/, '')}/v1/store?epochs=5`;
-      
-      const response = await fetch(storeUrl, {
-        method: 'PUT',
-        // Some nodes are sensitive to headers; keeping it minimal
-        body: file,
-        mode: 'cors',
-        credentials: 'omit'
-      });
+  addTrace("REST_API_UPLOAD_INIT", { filename, contentType });
 
-      if (!response.ok) {
-        const text = await response.text();
-        throw new Error(`NODE_ERR: ${response.status} ${text.substring(0, 50)}`);
-      }
+  const response = await fetch('/api/walrus/upload', {
+    method: 'POST',
+    body: formData,
+  });
 
-      const data = await response.json();
-      
-      // Parse flexible response schemas
-      const blobInfo = data.newlyCreated?.blobObject || data.alreadyCertified || data;
-      const blobId = blobInfo.blobId || blobInfo.blob_id;
-
-      if (!blobId) throw new Error("MALFORMED_RESPONSE: No Blob ID found");
-
-      return { 
-        blobId, 
-        url: getWalrusBlobUrl(blobId), 
-        alreadyCertified: !!data.alreadyCertified 
-      };
-    } catch (err) {
-      console.warn(`Walrus node ${endpoint} failed, trying fallback...`, err);
-      lastError = err;
-      continue;
-    }
+  if (!response.ok) {
+    const error = await response.json();
+    addTrace("REST_API_UPLOAD_FAIL", error);
+    throw new WalrusUploadError(error.message || `Upload failed: ${response.statusText}`);
   }
 
-  // Final Fail-safe: Local Simulation (ONLY as a last resort to ensure the demo doesn't crash)
-  // In a real hackathon submission, we want this to fail if the network is truly dead, 
-  // but for the sake of a smooth UI experience, we log the failure clearly.
-  throw new WalrusUploadError(`NETWORK_FAILURE: All Walrus nodes unreachable. Last error: ${lastError?.message}`);
+  const result = await response.json();
+  addTrace("REST_API_UPLOAD_SUCCESS", result);
+  return result;
 }
 
 export function getWalrusBlobUrl(blobId: string): string {
-  const envAggregator = process.env.NEXT_PUBLIC_WALRUS_AGGREGATOR;
-  const aggregator = envAggregator || AGGREGATORS[0];
+  const aggregator = process.env.NEXT_PUBLIC_WALRUS_AGGREGATOR || AGGREGATORS[0];
   return `${aggregator.replace(/\/$/, '')}/v1/${blobId}`;
 }
 
 export async function getWalrusBlob(blobId: string): Promise<Blob> {
-  const envAggregator = process.env.NEXT_PUBLIC_WALRUS_AGGREGATOR;
-  const targetAggregators = envAggregator ? [envAggregator, ...AGGREGATORS] : AGGREGATORS;
+  addTrace("REST_API_READ_INIT", { blobId });
+  const response = await fetch(`/api/walrus/read?blobId=${blobId}`);
   
-  for (const aggregator of targetAggregators) {
-    try {
-      const url = `${aggregator.replace(/\/$/, '')}/v1/${blobId}`;
-      const response = await fetch(url);
-      if (!response.ok) continue;
-      return await response.blob();
-    } catch (err) {
-      continue;
-    }
+  if (!response.ok) {
+    addTrace("REST_API_READ_FAIL", { status: response.status });
+    throw new Error("BLOB_NOT_FOUND_ON_NETWORK");
   }
-  throw new Error("BLOB_NOT_FOUND_ON_NETWORK");
+  
+  const blob = await response.blob();
+  addTrace("REST_API_READ_SUCCESS", { size: blob.size, type: blob.type });
+  return blob;
 }
 
 export class WalrusPublisherClient {
@@ -115,8 +104,7 @@ export class WalrusPublisherClient {
 
   async writeBlob(options: { data: string | Blob; contentType: string }) {
     const file = typeof options.data === "string" ? new Blob([options.data], { type: options.contentType }) : options.data;
-    const result = await uploadToWalrus(file);
-    return { id: result.blobId, url: result.url, alreadyCertified: result.alreadyCertified };
+    return await uploadToWalrus(file);
   }
 
   async readBlob(blobId: string) {
@@ -124,11 +112,41 @@ export class WalrusPublisherClient {
     return await blob.text();
   }
 
+  async readBlobRaw(blobId: string, onRetry?: (attempt: number) => void) {
+    const blob = await getWalrusBlob(blobId);
+    const text = await blob.text();
+    return {
+      rawData: text,
+      timestamp: new Date().toISOString(),
+      blobId
+    };
+  }
+
   async rehydrateSubmission(blobId: string) {
     const jsonText = await this.readBlob(blobId);
     return { ...JSON.parse(jsonText), walrusBlobId: blobId, rehydratedAt: new Date().toISOString(), verified: true };
   }
+
+  async addLifecycleEvent(parentBlobId: string, event: Omit<LifecycleEvent, "parentBlobId" | "timestamp">) {
+    const fullEvent: LifecycleEvent = {
+      ...event,
+      parentBlobId,
+      timestamp: new Date().toISOString()
+    };
+    return await this.writeBlob({
+      data: JSON.stringify(fullEvent),
+      contentType: "application/json"
+    });
+  }
 }
+
+export type LifecycleEvent = {
+  type: "status_change" | "comment" | "resolution" | "priority_change";
+  payload: any;
+  parentBlobId: string;
+  author: string;
+  timestamp: string;
+};
 
 export function useWalrusUpload() {
   const [isUploading, setIsUploading] = useState(false);

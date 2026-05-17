@@ -75,47 +75,6 @@ export default function FormBuilderPage() {
     setFields(fields.map(f => f.id === id ? { ...f, ...updates } : f));
   };
 
-  const seedDemoForm = () => {
-    setTitle("Walrus Protocol Audit - Developer Experience");
-    setDescription("Provide technical feedback on the Walrus storage layer, aggregator performance, and SDK stability.");
-    setFields([
-      {
-        id: uuidv4(),
-        type: "text",
-        label: "Aggregator Node ID",
-        required: true,
-        placeholder: "e.g. FRA-1-Testnet"
-      },
-      {
-        id: uuidv4(),
-        type: "select",
-        label: "Storage Class",
-        required: true,
-        options: ["Erasable", "Permanent", "Epoch-Bound"]
-      },
-      {
-        id: uuidv4(),
-        type: "rating",
-        label: "Retrieval Speed (TTFB)",
-        required: false
-      },
-      {
-        id: uuidv4(),
-        type: "textarea",
-        label: "Observed Consensus Artifacts",
-        required: true,
-        placeholder: "Describe any inconsistencies in shard reconstruction..."
-      },
-      {
-        id: uuidv4(),
-        type: "file",
-        label: "Network Trace / Logs",
-        required: false
-      }
-    ]);
-    toast.info("Demo Form Seeded!");
-  };
-
   const handleSave = async () => {
     if (fields.length === 0) {
       toast.error("Please add at least one field.");
@@ -140,10 +99,10 @@ export default function FormBuilderPage() {
         contentType: "application/json"
       });
 
-      setSavedFormId(result.id);
+      setSavedFormId(result.blobId);
       
       const existing = JSON.parse(localStorage.getItem("proofboard_forms") || "[]");
-      localStorage.setItem("proofboard_forms", JSON.stringify([...existing, { id: result.id, title, createdAt: schema.createdAt }]));
+      localStorage.setItem("proofboard_forms", JSON.stringify([...existing, { id: result.blobId, title, createdAt: schema.createdAt }]));
 
       toast.success("Form Schema Anchored to Walrus!");
     } catch (err: any) {
@@ -170,13 +129,6 @@ export default function FormBuilderPage() {
             <p className="text-muted-foreground text-lg">Design Walrus-native surveys and feedback loops.</p>
           </div>
           <div className="flex flex-wrap gap-3 w-full lg:w-auto">
-            <Button 
-              variant="outline" 
-              onClick={seedDemoForm} 
-              className="flex-1 lg:flex-none h-12 rounded-2xl gap-2 font-bold border-amber-500/20 text-amber-500 hover:bg-amber-500/5 transition-all"
-            >
-              <Zap className="w-4 h-4" /> Seed Demo
-            </Button>
             {savedFormId && (
                <Button variant="outline" onClick={copyLink} className="flex-1 lg:flex-none h-12 rounded-2xl gap-2 font-bold border-primary/20 text-primary">
                 <Share2 className="w-4 h-4" /> Share

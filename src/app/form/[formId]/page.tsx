@@ -93,11 +93,11 @@ export default function PublicFormPage() {
         contentType: "application/json"
       });
 
-      setSubmittedId(result.id);
+      setSubmittedId(result.blobId);
       
       const existing = JSON.parse(localStorage.getItem("proofboard_submissions") || "[]");
       localStorage.setItem("proofboard_submissions", JSON.stringify([...existing, { 
-        blobId: result.id, 
+        blobId: result.blobId, 
         formId, 
         formTitle: schema?.title,
         timestamp: submission.timestamp,

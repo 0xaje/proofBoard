@@ -8,15 +8,15 @@ import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 
 const PULSE_HISTORY = [
-  { id: 1, type: "Blob Index", user: "0x71c...82a", time: "2h ago", title: "Shard Retrieval Optimized", desc: "Successfully optimized TTFB for 50MB blobs across US-East aggregator nodes.", reps: 145, comments: 22 },
-  { id: 2, type: "Protocol", user: "0x44f...19b", time: "5h ago", title: "Epoch Retention Adjusted", desc: "Batch proposal to extend era retention for critical feedback shards to 15 epochs.", reps: 280, comments: 45 },
-  { id: 3, type: "Security", user: "0x99a...3c2", time: "1d ago", title: "Seal Entropy Audit", desc: "Zero-knowledge proof verification passed for the latest Seal encryption cycle.", reps: 95, comments: 8 },
+  { id: "pulse-1", type: "Blob Index", user: "0x71c...82a", time: "2h ago", title: "Shard Retrieval Optimized", desc: "Successfully optimized TTFB for 50MB blobs across US-East aggregator nodes.", reps: 145, comments: 22 },
+  { id: "pulse-2", type: "Protocol", user: "0x44f...19b", time: "5h ago", title: "Epoch Retention Adjusted", desc: "Batch proposal to extend era retention for critical feedback shards to 15 epochs.", reps: 280, comments: 45 },
+  { id: "pulse-3", type: "Security", user: "0x99a...3c2", time: "1d ago", title: "Seal Entropy Audit", desc: "Zero-knowledge proof verification passed for the latest Seal encryption cycle.", reps: 95, comments: 8 },
 ];
 
 const LIVE_PULSE_DATA = [
   { type: "Network", user: "0x11b...4d8", title: "New Aggregator Provisioned", desc: "Provisioned high-throughput node in FRA-1. Shard distribution balanced.", reps: 50, comments: 2 },
-  { id: 2, type: "Audit", user: "0x22c...5e9", title: "Integrity Scan Complete", desc: "1,200 unique Walrus blobs verified against local storage hashes.", reps: 310, comments: 14 },
-  { id: 3, type: "Storage", user: "0x33d...6f0", title: "Erasure Coding Verified", desc: "Verified 24/32 shard reconstruction for recently anchored feedback blobs.", reps: 120, comments: 5 },
+  { type: "Audit", user: "0x22c...5e9", title: "Integrity Scan Complete", desc: "1,200 unique Walrus blobs verified against local storage hashes.", reps: 310, comments: 14 },
+  { type: "Storage", user: "0x33d...6f0", title: "Erasure Coding Verified", desc: "Verified 24/32 shard reconstruction for recently anchored feedback blobs.", reps: 120, comments: 5 },
 ];
 
 export default function Home() {
@@ -25,8 +25,8 @@ export default function Home() {
   useEffect(() => {
     const interval = setInterval(() => {
       const newActivity = {
-        id: Date.now(),
         ...LIVE_PULSE_DATA[Math.floor(Math.random() * LIVE_PULSE_DATA.length)],
+        id: `live-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
         time: "Just now"
       };
       setActivities(prev => [newActivity, ...prev].slice(0, 3));

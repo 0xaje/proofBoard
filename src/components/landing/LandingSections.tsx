@@ -21,7 +21,7 @@ export const Hero = () => {
           className="max-w-6xl mx-auto space-y-10"
         >
           <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-white/10 bg-white/5 backdrop-blur-md text-[10px] font-bold uppercase tracking-[0.2em] text-primary mb-4 shadow-xl">
-            <Zap className="w-4 h-4 fill-current" /> Walrus-Native Feedback Protocol
+            <Zap className="w-4 h-4 fill-current" /> Walrus-Native Feedback Workflow
           </div>
 
           <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter leading-[0.9] text-balance">
@@ -29,23 +29,14 @@ export const Hero = () => {
           </h1>
 
           <p className="text-lg md:text-xl lg:text-2xl text-muted-foreground max-w-2xl mx-auto font-medium leading-relaxed opacity-80">
-            The premier platform for builders to capture verified truth. Every submission is anchored as a cryptographically verifiable blob on Walrus.
+            The premier decentralized feedback operating system for the Walrus ecosystem. Every submission and communication lifecycle is anchored as a cryptographically verifiable blob.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-10">
-            <Link href="/demo">
-              <Button size="lg" className="h-20 px-12 text-xl font-bold gap-4 rounded-[28px] bg-primary text-white hover:bg-primary/90 shadow-[0_20px_50px_rgba(0,112,243,0.3)] transition-all hover:scale-105">
-                Launch Demo Mode
-                <ArrowRight className="w-7 h-7" />
-              </Button>
-            </Link>
             <Link href="/builder">
-              <Button
-                size="lg"
-                variant="outline"
-                className="h-20 px-12 text-xl font-bold rounded-[28px] border-white/10 hover:bg-white/5 backdrop-blur-md transition-all hover:scale-105"
-              >
-                Open Builder
+              <Button size="lg" className="h-20 px-12 text-xl font-bold gap-4 rounded-[28px] bg-primary text-white hover:bg-primary/90 shadow-[0_20px_50px_rgba(0,112,243,0.3)] transition-all hover:scale-105">
+                Launch Form Builder
+                <ArrowRight className="w-7 h-7" />
               </Button>
             </Link>
           </div>
@@ -58,8 +49,8 @@ export const Hero = () => {
 export const FeatureGrid = () => {
   const features = [
     {
-      title: "Walrus-Native",
-      desc: "Zero-database architecture. Your form schemas and responses are stored as permanent blobs.",
+      title: "Feedback Collaboration",
+      desc: "Full communication history and review lifecycle stored transparently as permanent blobs.",
       icon: Database,
       color: "text-blue-500",
     },
@@ -76,8 +67,8 @@ export const FeatureGrid = () => {
       color: "text-cyan-glow",
     },
     {
-      title: "Dashboard",
-      desc: "Professional management console for tracking, status updates, and CSV data exports.",
+      title: "Issue Management",
+      desc: "Production-grade workflow console for tracking, priority updates, and team collaboration.",
       icon: LayoutDashboard,
       color: "text-purple-500",
     },

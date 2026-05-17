@@ -115,7 +115,7 @@ export default function SubmitFeedbackPage() {
       });
 
       setUploadStatus("Storage confirmed ✔");
-      setBlobId(blob.id);
+      setBlobId(blob.blobId);
       setBlobUrl(blob.url);
       
       // Local indexing logic with extended encryption metadata

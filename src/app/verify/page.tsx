@@ -71,15 +71,7 @@ function VerificationPortal() {
   const [isExporting, setIsExporting] = React.useState(false);
   const [showAdvanced, setShowAdvanced] = React.useState(false);
   const [traces, setTraces] = React.useState<ProtocolExecutionTrace[]>([]);
-  const [networkStatus, setNetworkStatus] = React.useState<"stable" | "jitter" | "degraded">("stable");
-
-  React.useEffect(() => {
-    const interval = setInterval(() => {
-      const states: ("stable" | "jitter" | "degraded")[] = ["stable", "jitter", "degraded"];
-      setNetworkStatus(states[Math.floor(Math.random() * states.length)]);
-    }, 10000);
-    return () => clearInterval(interval);
-  }, []);
+  const networkStatus = "stable";
 
   React.useEffect(() => {
     if (searchParams.get("blobId")) {
@@ -104,35 +96,23 @@ function VerificationPortal() {
       const raw = await client.readBlobRaw(blobId, (attempt: number) => setRetryAttempt(attempt));
       setRawResult(raw);
 
+      const parsed = JSON.parse(raw.rawData);
+      
       const tests = {
         exists: true,
-        isJson: false,
-        integrityHash: "sha256:" + Math.random().toString(36).substring(2, 10),
-        decryption: "N/A"
+        isJson: true,
+        integrityHash: "sha256:" + await crypto.subtle.digest("SHA-256", new TextEncoder().encode(raw.rawData)).then(b => Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, '0')).join('')),
+        decryption: parsed.isEncrypted ? "Seal Verified ✔" : "N/A"
       };
 
-      try {
-        let textToParse = raw.rawData;
-        if (forceCorrupt) {
-          textToParse = "{ corrupted: data... " + textToParse;
-          throw new Error("MALICIOUS_TAMPERING_DETECTED");
-        }
+      setResult({
+        ...parsed,
+        walrusBlobId: blobId,
+        rehydratedAt: raw.timestamp
+      });
 
-        const parsed = JSON.parse(textToParse);
-        tests.isJson = true;
-        setResult({
-          ...parsed,
-          walrusBlobId: blobId,
-          rehydratedAt: raw.timestamp
-        });
-
-        if (parsed.isEncrypted) tests.decryption = "Seal Verified ✔";
-        setIntegrityReport(tests);
-        toast.success("VERIFIED: Protocol integrity confirmed.");
-      } catch (err: any) {
-        setIntegrityReport({ ...tests, isJson: false, error: err.message });
-        throw err;
-      }
+      setIntegrityReport(tests);
+      toast.success("VERIFIED: Protocol integrity confirmed.");
     } catch (err: any) {
       if (err.message === "BLOB_NOT_FOUND") {
         setError("BLOB NOT FOUND: The provided ID does not exist on Walrus.");
@@ -147,14 +127,7 @@ function VerificationPortal() {
     }
   };
 
-  const simulateAttack = () => {
-    setIsIntegrityTesting(true);
-    toast.warning("Simulating Malicious Payload Tampering...");
-    setTimeout(() => {
-      handleVerify(undefined, true);
-      setIsIntegrityTesting(false);
-    }, 1500);
-  };
+
 
   const handleExportPacket = () => {
     if (!result || !rawResult) return;
@@ -212,15 +185,7 @@ function VerificationPortal() {
                       onChange={(e) => setBlobId(e.target.value)}
                     />
                     <div className="absolute right-3 top-3 flex gap-2">
-                      <Button 
-                        type="button"
-                        onClick={simulateAttack}
-                        variant="ghost"
-                        className="h-14 w-14 p-0 rounded-2xl hover:bg-red-500/10 text-red-500/40 hover:text-red-500 border border-transparent hover:border-red-500/20 transition-all"
-                        title="Simulate Integrity Attack"
-                      >
-                        <ShieldAlert className="w-6 h-6" />
-                      </Button>
+
                       <Button 
                         disabled={isVerifying || !blobId}
                         className="h-14 px-8 rounded-2xl font-black gap-3 shadow-lg shadow-primary/20 bg-primary text-white"

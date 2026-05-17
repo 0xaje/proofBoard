@@ -37,7 +37,6 @@ export const Navbar = () => {
   };
 
   const links = [
-    { href: "/demo", label: "Demo Mode" },
     { href: "/builder", label: "Form Builder" },
     { href: "/admin", label: "Dashboard" },
     { href: "/verify", label: "Verification" },
