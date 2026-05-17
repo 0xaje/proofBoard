@@ -120,7 +120,7 @@ export default function SubmitFeedbackPage() {
       
       // Local indexing logic with extended encryption metadata
       const submission = {
-        walrusBlobId: blob.id,
+        walrusBlobId: blob.blobId,
         projectId,
         userId: "sui_master.sui",
         type,

@@ -44,7 +44,7 @@ interface SubmissionSummary {
   formTitle: string;
   timestamp: string;
   isEncrypted: boolean;
-  status: "pending" | "reviewing" | "resolved";
+  status: "pending" | "reviewing" | "planned" | "resolved" | "rejected";
 }
 
 export default function AdminDashboardPage() {

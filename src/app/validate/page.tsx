@@ -63,30 +63,30 @@ export default function ValidationPage() {
         createdAt: new Date().toISOString()
       };
       const schemaResult = await client.writeBlob({ data: JSON.stringify(schema), contentType: "application/json" });
-      updateStep("builder", "pass", `Schema anchored: ${schemaResult.id}`);
+      updateStep("builder", "pass", `Schema anchored: ${schemaResult.blobId}`);
 
       // 2. Public Form Link
       updateStep("public", "running", "Verifying link resolve...");
       await new Promise(r => setTimeout(r, 1000));
-      updateStep("public", "pass", `/form/${schemaResult.id}`);
+      updateStep("public", "pass", `/form/${schemaResult.blobId}`);
 
       // 3. Walrus Submission
       updateStep("submission", "running", "Anchoring sample response...");
       const submission = {
-        formId: schemaResult.id,
+        formId: schemaResult.blobId,
         submissionId: uuidv4(),
         responses: { f1: `Validated at ${new Date().toLocaleTimeString()}` },
         timestamp: new Date().toISOString()
       };
       const subResult = await client.writeBlob({ data: JSON.stringify(submission), contentType: "application/json" });
-      updateStep("submission", "pass", `Submission anchored: ${subResult.id}`);
+      updateStep("submission", "pass", `Submission anchored: ${subResult.blobId}`);
 
       // 4. Admin Visibility
       updateStep("admin", "running", "Injecting into discovery registry...");
       const existing = JSON.parse(localStorage.getItem("proofboard_submissions") || "[]");
       localStorage.setItem("proofboard_submissions", JSON.stringify([...existing, { 
-        blobId: subResult.id, 
-        formId: schemaResult.id, 
+        blobId: subResult.blobId, 
+        formId: schemaResult.blobId, 
         formTitle: schema.title,
         timestamp: submission.timestamp
       }]));
@@ -100,14 +100,14 @@ export default function ValidationPage() {
 
       // 6. Independent Audit
       updateStep("verify", "running", "Rehydrating truth from Walrus...");
-      const verified = await client.readBlob(subResult.id);
+      const verified = await client.readBlob(subResult.blobId);
       if (JSON.parse(verified).submissionId === submission.submissionId) {
         updateStep("verify", "pass", "Integrity confirmed: 100% Truth match");
       } else {
         throw new Error("Integrity mismatch");
       }
 
-      setTestContext({ schemaId: schemaResult.id, subId: subResult.id });
+      setTestContext({ schemaId: schemaResult.blobId, subId: subResult.blobId });
       toast.success("HACKATHON COMPLIANCE CONFIRMED");
     } catch (err: any) {
       toast.error("Validation Sequence Failed");

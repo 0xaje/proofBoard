@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -49,6 +48,8 @@ export async function POST(req: Request) {
       - Sentiment is "Negative" if the user expresses frustration or mentions a critical failure.
       - "Wallet Issue" applies if wallets, transactions, signatures, or on-chain interactions fail.
     `;
+
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
