@@ -31,7 +31,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { WalrusPublisherClient } from "@/lib/walrus";
+import { WalrusPublisherClient, getWalrusBlobUrl } from "@/lib/walrus";
 import { FormSchema, FormSubmission } from "@/lib/types";
 import { encryptSealData } from "@/lib/seal";
 import { v4 as uuidv4 } from "uuid";
@@ -316,48 +316,102 @@ export default function PublicFormPage() {
                   )}
 
                   {field.type === "file" && (
-                    <div className="p-10 rounded-[32px] border-2 border-dashed border-white/10 bg-white/[0.02] text-center space-y-6 hover:border-primary/30 transition-all group">
-                      <div className="w-16 h-16 rounded-[24px] bg-white/5 flex items-center justify-center mx-auto text-muted-foreground group-hover:bg-primary/20 group-hover:text-primary transition-all shadow-xl">
-                        <Upload className="w-8 h-8" />
-                      </div>
-                      <div className="space-y-2">
-                        <p className="text-lg font-bold">Walrus-Native Storage</p>
-                        <p className="text-xs text-muted-foreground font-medium px-4">Files are anchored directly as immutable blobs on the decentralized network.</p>
-                      </div>
-                      <Input 
-                        type="file" 
-                        required={field.required}
-                        onChange={async (e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            try {
-                              toast.info("Uploading asset to Walrus testnet...");
-                              const { uploadToWalrus } = await import("@/lib/walrus");
-                              const result = await uploadToWalrus(file);
-                              handleInputChange(field.id, { 
-                                name: file.name, 
-                                size: file.size, 
-                                type: file.type,
-                                blobId: result.blobId,
-                                url: result.url
-                              });
-                              toast.success(`Asset anchored: ${result.blobId.slice(0, 8)}...`);
-                            } catch (err) {
-                              toast.error("Walrus asset upload failed.");
-                            }
-                          }
-                        }}
-                        className="hidden"
-                        id={`file-${field.id}`}
-                      />
-                      <Button 
-                        type="button"
-                        variant="outline" 
-                        onClick={() => document.getElementById(`file-${field.id}`)?.click()}
-                        className="rounded-xl h-12 px-10 font-black text-xs border-white/10 hover:bg-white/5"
-                      >
-                        Select Asset
-                      </Button>
+                    <div className="p-8 rounded-[32px] border border-white/5 bg-white/[0.03] text-center space-y-6 hover:border-primary/20 transition-all">
+                      {responses[field.id] ? (
+                        <div className="space-y-6">
+                          <div className="flex flex-col items-center justify-center space-y-4">
+                            {/* Render image or video preview */}
+                            {responses[field.id].type?.startsWith("image/") ? (
+                              <div className="relative w-full max-w-md h-64 rounded-2xl overflow-hidden border border-white/10 bg-black/40 mx-auto">
+                                <img 
+                                  src={responses[field.id].url || getWalrusBlobUrl(responses[field.id].blobId)} 
+                                  alt="Preview" 
+                                  className="w-full h-full object-contain"
+                                />
+                              </div>
+                            ) : responses[field.id].type?.startsWith("video/") ? (
+                              <div className="relative w-full max-w-md h-64 rounded-2xl overflow-hidden border border-white/10 bg-black/40 mx-auto">
+                                <video 
+                                  src={responses[field.id].url || getWalrusBlobUrl(responses[field.id].blobId)} 
+                                  controls 
+                                  className="w-full h-full object-contain"
+                                />
+                              </div>
+                            ) : (
+                              <div className="w-16 h-16 rounded-[24px] bg-primary/20 text-primary flex items-center justify-center mx-auto shadow-lg shadow-primary/10">
+                                <CheckCircle2 className="w-8 h-8" />
+                              </div>
+                            )}
+                            
+                            <div className="space-y-1">
+                              <p className="font-bold text-base text-white max-w-md truncate mx-auto">{responses[field.id].name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {(responses[field.id].size / 1024 / 1024).toFixed(2)} MB • Decentralized Attachment
+                              </p>
+                              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-500/10 text-green-500 text-[10px] font-bold uppercase tracking-widest border border-green-500/20 mt-2">
+                                <ShieldCheck className="w-3.5 h-3.5" /> Anchored to Walrus
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-center gap-3">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => {
+                                handleInputChange(field.id, null);
+                              }}
+                              className="rounded-xl h-11 px-6 font-bold text-xs text-red-500 border-red-500/20 hover:bg-red-500/10 hover:border-red-500 transition-all"
+                            >
+                              Remove Attachment
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-6">
+                          <div className="w-16 h-16 rounded-[24px] bg-white/5 flex items-center justify-center mx-auto text-muted-foreground group-hover:bg-primary/20 group-hover:text-primary transition-all shadow-xl">
+                            <Upload className="w-8 h-8" />
+                          </div>
+                          <div className="space-y-2">
+                            <p className="text-lg font-bold">Walrus-Native Storage</p>
+                            <p className="text-xs text-muted-foreground font-medium px-4">Files are anchored directly as immutable blobs on the decentralized network.</p>
+                          </div>
+                          <Input 
+                            type="file" 
+                            required={field.required}
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                try {
+                                  toast.info("Uploading asset to Walrus testnet...");
+                                  const { uploadToWalrus } = await import("@/lib/walrus");
+                                  const result = await uploadToWalrus(file);
+                                  handleInputChange(field.id, { 
+                                    name: file.name, 
+                                    size: file.size, 
+                                    type: file.type,
+                                    blobId: result.blobId,
+                                    url: result.url
+                                  });
+                                  toast.success(`Asset anchored: ${result.blobId.slice(0, 8)}...`);
+                                } catch (err) {
+                                  toast.error("Walrus asset upload failed.");
+                                }
+                              }
+                            }}
+                            className="hidden"
+                            id={`file-${field.id}`}
+                          />
+                          <Button 
+                            type="button"
+                            variant="outline" 
+                            onClick={() => document.getElementById(`file-${field.id}`)?.click()}
+                            className="rounded-xl h-12 px-10 font-black text-xs border-white/10 hover:bg-white/5"
+                          >
+                            Select Asset
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
