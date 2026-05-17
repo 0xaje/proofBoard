@@ -48,6 +48,23 @@ export default function PublicFormPage() {
 
   React.useEffect(() => {
     const fetchSchema = async () => {
+      // 1. Try local fallback first for instant demo experience
+      try {
+        const localForms = JSON.parse(localStorage.getItem("proofboard_forms") || "[]");
+        const found = localForms.find((f: any) => f.id === formId);
+        if (found && found.schema) {
+          setSchema(found.schema);
+          setIsLoading(false);
+          // Still attempt background Walrus query to certify it
+          const client = new WalrusPublisherClient({ network: "testnet" });
+          client.readBlob(formId as string).catch(() => {});
+          return;
+        }
+      } catch (e) {
+        console.warn("Storage fallback skipped:", e);
+      }
+
+      // 2. Fallback to raw Walrus query
       const client = new WalrusPublisherClient({ network: "testnet" });
       try {
         const data = await client.readBlob(formId as string);

@@ -102,7 +102,12 @@ export default function FormBuilderPage() {
       setSavedFormId(result.blobId);
       
       const existing = JSON.parse(localStorage.getItem("proofboard_forms") || "[]");
-      localStorage.setItem("proofboard_forms", JSON.stringify([...existing, { id: result.blobId, title, createdAt: schema.createdAt }]));
+      localStorage.setItem("proofboard_forms", JSON.stringify([...existing, { 
+        id: result.blobId, 
+        title, 
+        createdAt: schema.createdAt,
+        schema
+      }]));
 
       toast.success("Form Schema Anchored to Walrus!");
     } catch (err: any) {
