@@ -114,12 +114,12 @@ function VerificationPortal() {
       setIntegrityReport(tests);
       toast.success("VERIFIED: Protocol integrity confirmed.");
     } catch (err: any) {
-      if (err.message === "BLOB_NOT_FOUND") {
-        setError("BLOB NOT FOUND: The provided ID does not exist on Walrus.");
+      if (err.message === "BLOB_NOT_FOUND" || err.message === "BLOB_NOT_FOUND_ON_NETWORK") {
+        setError("BLOB NOT FOUND: The provided ID does not exist or has not replicated on the Walrus network yet.");
       } else if (err.message === "INVALID_PAYLOAD" || err.name === "SyntaxError" || err.message === "MALICIOUS_TAMPERING_DETECTED") {
-        setError("⚠ INTEGRITY VIOLATION: Corrupted payload detected.");
+        setError("INTEGRITY VIOLATION: Corrupted payload detected.");
       } else {
-        setError("FETCH FAILED: Walrus network delayed — partial recovery mode active.");
+        setError("FETCH FAILED: The decentralized storage nodes are syncing. Please try again in a few seconds.");
       }
     } finally {
       setIsVerifying(false);
