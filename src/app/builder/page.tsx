@@ -67,6 +67,96 @@ export default function FormBuilderPage() {
     setFields([...fields, newField]);
   };
 
+  const loadTemplate = (type: "bug" | "grant") => {
+    if (type === "bug") {
+      setTitle("Walrus Bug Reporter");
+      setDescription("Submit dynamic bug reports, screenshots, and system logs directly to the decentralized network.");
+      setFields([
+        {
+          id: uuidv4(),
+          type: "text",
+          label: "Project Name",
+          required: true,
+          placeholder: "e.g., ProofBoard"
+        },
+        {
+          id: uuidv4(),
+          type: "select",
+          label: "Issue Category",
+          required: true,
+          options: ["UI/UX Glitch", "Smart Contract Bug", "Aggregator Latency", "Other"]
+        },
+        {
+          id: uuidv4(),
+          type: "textarea",
+          label: "Reproduction Steps",
+          required: true,
+          placeholder: "1. Navigate to builder\n2. Click publish..."
+        },
+        {
+          id: uuidv4(),
+          type: "rating",
+          label: "Severity Rating",
+          required: false
+        },
+        {
+          id: uuidv4(),
+          type: "url",
+          label: "GitHub Issue Link",
+          required: false,
+          placeholder: "https://github.com/..."
+        },
+        {
+          id: uuidv4(),
+          type: "file",
+          label: "Attach Screen Capture / Log File",
+          required: false
+        }
+      ]);
+      toast.success("Loaded Walrus Bug Reporter template!");
+    } else if (type === "grant") {
+      setTitle("Developer Grant Application");
+      setDescription("Apply for community builder grants and anchor your milestones immutably.");
+      setFields([
+        {
+          id: uuidv4(),
+          type: "text",
+          label: "Project Title",
+          required: true,
+          placeholder: "Enter the name of your dApp"
+        },
+        {
+          id: uuidv4(),
+          type: "textarea",
+          label: "Detailed Proposal Summary",
+          required: true,
+          placeholder: "What are you building and why is it valuable?"
+        },
+        {
+          id: uuidv4(),
+          type: "select",
+          label: "Requested Funding Tier",
+          required: true,
+          options: ["Micro Grant (< $5k)", "Community Grant ($5k - $15k)", "Core Grant (> $15k)"]
+        },
+        {
+          id: uuidv4(),
+          type: "url",
+          label: "Team Portfolio / Github Repo",
+          required: true,
+          placeholder: "https://github.com/..."
+        },
+        {
+          id: uuidv4(),
+          type: "file",
+          label: "Upload Full Proposal PDF",
+          required: true
+        }
+      ]);
+      toast.success("Loaded Developer Grant Application template!");
+    }
+  };
+
   const removeField = (id: string) => {
     setFields(fields.filter(f => f.id !== id));
   };
@@ -171,6 +261,36 @@ export default function FormBuilderPage() {
                     </button>
                   );
                 })}
+              </div>
+            </div>
+
+            <div className="premium-card p-6 space-y-4">
+              <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60 mb-4">Quick Templates</h3>
+              <div className="space-y-3">
+                <button
+                  onClick={() => loadTemplate("bug")}
+                  className="w-full flex items-center gap-3 p-3.5 rounded-2xl bg-primary/5 border border-primary/20 hover:border-primary hover:bg-primary/10 transition-all text-left group"
+                >
+                  <div className="p-2 rounded-xl bg-primary/15 text-primary">
+                    <Zap className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold">Walrus Bug Reporter</p>
+                    <p className="text-[9px] text-muted-foreground font-medium">Screenshots, ratings, links</p>
+                  </div>
+                </button>
+                <button
+                  onClick={() => loadTemplate("grant")}
+                  className="w-full flex items-center gap-3 p-3.5 rounded-2xl bg-white/5 border border-white/5 hover:border-primary/50 hover:bg-primary/5 transition-all text-left group"
+                >
+                  <div className="p-2 rounded-xl bg-white/10 text-muted-foreground group-hover:text-primary transition-colors">
+                    <Database className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-white">Developer Grant</p>
+                    <p className="text-[9px] text-muted-foreground font-medium">Files, tiers, descriptions</p>
+                  </div>
+                </button>
               </div>
             </div>
           </div>
