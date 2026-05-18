@@ -9,8 +9,8 @@
   --color-foreground: hsl(213, 31%, 91%);
   
   --color-ocean-deep: #020617;
-  --color-primary: #0070f3;
-  --color-primary-foreground: #ffffff;
+  --color-primary: #00d2ff;
+  --color-primary-foreground: #020617;
   
   --color-cyan-glow: #00dfd8;
   --color-purple-haze: #7928ca;
@@ -60,7 +60,7 @@
       transition: all 0.3s ease;
     }
     &:hover::after {
-      border-color: rgba(0, 112, 243, 0.5);
+      border-color: rgba(0, 210, 255, 0.5);
     }
   }
   
