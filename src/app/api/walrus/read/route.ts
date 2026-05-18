@@ -22,9 +22,9 @@ export async function GET(req: NextRequest) {
 
   try {
     const aggregator = process.env.WALRUS_AGGREGATOR || "https://aggregator.walrus-testnet.walrus.space";
-    const url = `${aggregator.replace(/\/$/, "")}/v1/${blobId}`;
+    const url = `${aggregator.replace(/\/$/, "")}/v1/${blobId}?nocache=${Date.now()}`;
 
-    const response = await fetch(url);
+    const response = await fetch(url, { cache: "no-store" });
 
     if (!response.ok) {
       return NextResponse.json(
